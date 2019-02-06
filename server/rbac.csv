@@ -1,0 +1,5 @@
+p, admin, /*, *, allow
+p, *, /logout, DELETE, allow
+
+p, seeker, /api/v1/test/*, *, allow
+
