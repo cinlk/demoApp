@@ -3,6 +3,7 @@ package handlers
 import (
 	"demoApp/server/model/dbModel"
 	"demoApp/server/model/dbOperater"
+	"demoApp/server/model/httpModel"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"net/http"
@@ -14,11 +15,11 @@ type queryPage struct {
 }
 
 type recommands struct {
-	News          []dbModel.LatestNews    `json:"news"`
-	JobCategory   []dbModel.JobCategory   `json:"job_category"`
-	TopJobs       []dbModel.TopJobs       `json:"top_jobs"`
-	CareerTalk    []dbModel.CarrerTalk    `json:"career_talk"`
-	ApplyClassify []dbModel.ApplyClassify `json:"apply_classify"`
+	News          []dbModel.LatestNews                `json:"news"`
+	JobCategory   []dbModel.JobCategory               `json:"job_category"`
+	TopJobs       []dbModel.TopJobs                   `json:"top_jobs"`
+	CareerTalk    []httpModel.HttpCareerTalkListModel `json:"career_talk"`
+	ApplyClassify []dbModel.ApplyClassify             `json:"apply_classify"`
 }
 
 type listHandler struct {
@@ -76,7 +77,7 @@ func (l *listHandler) personalityJobs(w http.ResponseWriter, r *http.Request, pa
 		return
 	}
 
-	jobs := l.db.Jobs(page.Offset, page.Limit)
+	jobs := l.db.JobList(page.Offset, page.Limit)
 	l.JSON(w, jobs, http.StatusOK)
 }
 
@@ -89,7 +90,7 @@ func (l *listHandler) personalRecommand(w http.ResponseWriter, r *http.Request, 
 	res.ApplyClassify = l.db.OnlineApplyClass()
 	res.TopJobs = l.db.TopJobs()
 	res.JobCategory = l.db.LatestJobCategory(10)
-	res.CareerTalk = l.db.CarrerTalks(20)
+	res.CareerTalk = l.db.CarrerTalks(16)
 
 	l.JSON(w, res, http.StatusOK)
 

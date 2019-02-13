@@ -9,12 +9,19 @@ import (
 func CreateTables() {
 
 	orm.InitalDB()
+	// create job enum type
+	_ = orm.DB.Exec("CREATE TYPE mood AS ENUM ('intern', 'graduate', 'all', 'onlineApply')").Error
+
+	// create recruite meeting content enum type
+	_ = orm.DB.Exec("CREATE TYPE contentType AS ENUM ('text', 'html')").Error
+
 	// create table
 	//orm.DB.SetLogger(gLog.GetLogUtil())
-	err := orm.DB.AutoMigrate(&dbModel.AppGuidanceItem{}, &dbModel.Account{}, &dbModel.Recruiter{},
+	err := orm.DB.AutoMigrate(&dbModel.AppGuidanceItem{}, &dbModel.NewsModel{}, &dbModel.Account{}, &dbModel.Recruiter{},
 		&dbModel.User{}, &dbModel.SocialAccount{},
 		&dbModel.Banners{}, &dbModel.LatestNews{}, &dbModel.JobCategory{}, &dbModel.TopJobs{},
-		&dbModel.CarrerTalk{}, &dbModel.Company{}, &dbModel.CompuseJobs{}, &dbModel.ApplyClassify{}).Error
+		&dbModel.CareerTalk{}, &dbModel.UserApplyCarrerTalk{}, &dbModel.Company{}, &dbModel.CompuseJobs{}, &dbModel.InternJobs{},
+		&dbModel.UserApplyJobs{}, &dbModel.ApplyClassify{}).Error
 
 	if err != nil {
 		gLog.LOG_PANIC(err)
@@ -28,6 +35,14 @@ func CreateTables() {
 	}
 
 	err = orm.DB.Model(&dbModel.SocialAccount{}).AddForeignKey("phone", "account(phone)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.CompuseJobs{}).AddForeignKey("company_id", "company(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.InternJobs{}).AddForeignKey("company_id", "company(id)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}

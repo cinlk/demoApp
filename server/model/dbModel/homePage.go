@@ -21,6 +21,7 @@ type JobCategory struct {
 	Title      string `gorm:"unique" json:"title"`
 }
 
+// 专栏推荐职位? TODO
 type TopJobs struct {
 	gorm.Model `json:"-"`
 	ImageURL   string `json:"image_url"`

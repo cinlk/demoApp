@@ -17,6 +17,13 @@ func (a *AppDBoperator) AppGuidanceItems() (res []dbModel.AppGuidanceItem) {
 
 }
 
+func (a *AppDBoperator) News(t string, offset int) (res []dbModel.NewsModel) {
+
+	_ = a.orm.Model(&dbModel.NewsModel{}).Offset(offset).Limit(10).Find(&res)
+
+	return
+}
+
 func NewAppDBoperator() *AppDBoperator {
 
 	return &AppDBoperator{

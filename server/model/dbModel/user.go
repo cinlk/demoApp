@@ -64,7 +64,7 @@ type User struct {
 	LastLogin  *time.Time `gorm:"default:now()" json:"-"`
 	Account    *Account   `gorm:"ForeignKey:Phone;AssociationForeignKey:Phone"`
 
-	CarrerTalks []UserCarrerTalk `gorm:"ForeignKey:UserId;AssociationForeignKey:UserId" json:"carrer_talks"`
+	//CarrerTalks []UserCarrerTalk `gorm:"ForeignKey:UserId;AssociationForeignKey:UserId" json:"carrer_talks"`
 }
 
 type Recruiter struct {

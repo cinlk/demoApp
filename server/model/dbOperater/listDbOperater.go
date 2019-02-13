@@ -2,8 +2,8 @@ package dbOperater
 
 import (
 	"demoApp/server/model/dbModel"
+	"demoApp/server/model/httpModel"
 	"github.com/jinzhu/gorm"
-	"goframework/gLog"
 	"goframework/orm"
 )
 
@@ -23,7 +23,7 @@ func (l *ListDboperater) Banners(limit int) []dbModel.Banners {
 func (l *ListDboperater) LatestNews() []dbModel.LatestNews {
 
 	var news = []dbModel.LatestNews{}
-	_ = orm.DB.Model(&dbModel.LatestNews{}).Find(&news)
+	_ = orm.DB.Model(&dbModel.LatestNews{}).Order("created_at").Find(&news)
 	return news
 }
 
@@ -41,21 +41,18 @@ func (l *ListDboperater) TopJobs() []dbModel.TopJobs {
 	return jobs
 }
 
-func (l *ListDboperater) CarrerTalks(limit int) []dbModel.CarrerTalk {
+// 首页的 xxx特性的会议数据 TODO
+func (l *ListDboperater) CarrerTalks(limit int) []httpModel.HttpCareerTalkListModel {
 
-	var talks = []dbModel.CarrerTalk{}
-	_ = orm.DB.Model(&dbModel.CarrerTalk{}).Limit(limit).Find(&talks)
-	needDelete := []int{}
-	// 查找公司数据
-	for i := 0; i < len(talks); i++ {
-		err := orm.DB.Model(&dbModel.Company{}).Where("id = ?", talks[i].CompanyID).Find(&talks[i].Company).Error
-		if err != nil {
-			gLog.LOG_ERROR(err)
-			needDelete = append(needDelete, i)
-			continue
-		}
-	}
-	// 删除指定数据
+	var talks = []httpModel.HttpCareerTalkListModel{}
+
+	_ = orm.DB.Model(&dbModel.CareerTalk{}).
+		Joins("left join company on company.id = career_talk.company_id").
+		Select("career_talk.id as meeting_id, career_talk.college, career_talk.start_time, " +
+			"career_talk.simplify_address, career_talk.icon_url as college_icon_url, " +
+			"company.name as company_name").
+		Limit(limit).
+		Scan(&talks)
 
 	return talks
 }
@@ -65,6 +62,23 @@ func (l *ListDboperater) OnlineApplyClass() []dbModel.ApplyClassify {
 	var c = []dbModel.ApplyClassify{}
 	_ = orm.DB.Model(&dbModel.ApplyClassify{}).Find(&c)
 	return c
+}
+
+func (l *ListDboperater) JobList(offset, limit int) []httpModel.HttpJobListModel {
+
+	// first compuse jobs
+	// second intern jobs
+	// TODO
+	jobs := []httpModel.HttpJobListModel{}
+	_ = orm.DB.Model(&dbModel.CompuseJobs{}).Joins("left join  company on company.id = compuse_jobs.company_id").
+		Select("compuse_jobs.id as job_id, compuse_jobs.icon_url, compuse_jobs.type, compuse_jobs.name as job_name," +
+			"compuse_jobs.location_city as address, compuse_jobs.education as degree, " +
+			"compuse_jobs.review_counts as review_count, compuse_jobs.created_time, " +
+			"company.name as company_name ").
+		Offset(offset).Limit(limit).Scan(&jobs)
+
+	return jobs
+
 }
 
 func (l *ListDboperater) Jobs(offset, limit int) []dbModel.CompuseJobs {

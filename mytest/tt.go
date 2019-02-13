@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"strconv"
+	"time"
 )
 
 var testDB *gorm.DB
@@ -32,11 +33,16 @@ func createJobs() {
 
 	for i := 0; i < 5; i++ {
 		item := dbModel.CompuseJobs{}
-		item.Id = "dqwdqwd" + strconv.Itoa(i)
-		item.Name = "当前为多"
+		item.Id = "ffewfwef" + strconv.Itoa(i)
+		item.Name = "实习大豆纤维多"
 		item.CompanyID = "companyID"
-		item.Icon = "http://icons.iconarchive.com/icons/blackvariant/button-ui-requests-6/1024/VirtualBox-icon.png"
-		err := testDB.Create(&item).Error
+		item.IconURL = "http://icons.iconarchive.com/icons/blackvariant/button-ui-system-folders-drives/1024/Developer-icon.png"
+		item.LocationCity = []string{"city1", "city2", "city3"}
+		item.ReviewCounts = 100
+		item.Education = "大专"
+		item.Type = "intern"
+
+		err := testDB.FirstOrCreate(&item).Error
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -47,16 +53,36 @@ func createJobs() {
 
 func creatCarrerTalk() {
 	for i := 0; i < 12; i++ {
-		item := dbModel.CarrerTalk{}
+		item := dbModel.CareerTalk{}
 		item.Id = "宣讲会当前为多" + strconv.Itoa(i)
 		item.Name = "宣讲会当前为多"
-		item.CompanyID = "ompanyID"
-		item.Icon = "http://file06.16sucai.com/2016/0902/994c8ad1edafbc538542708e79fa1bc5.jpg"
+		item.CompanyID = "companyID"
+		item.IconURL = "https://cdn1.iconfinder.com/data/icons/education-icons-3/155/vector_313_21-512.png"
+		item.College = "我的大学"
+		item.SimplifyAddress = "某个楼"
+		t := time.Now()
+		item.StartTime = &t
+		item.ContentType = dbModel.Text
+
 		err := testDB.Create(&item).Error
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+	}
+}
+
+func createNews() {
+	for i := 0; i < 6; i++ {
+		item := dbModel.NewsModel{}
+		var t = time.Now()
+		item.Time = &t
+		item.Icon = "http://pic34.photophoto.cn/20150128/0007020160374237_b.jpg"
+		item.Link = "http://gorm.book.jasperxu.com/database.html"
+		item.Title = "gorm 中文文档"
+		item.Author = "github"
+
+		testDB.Create(&item)
 	}
 }
 
@@ -102,4 +128,6 @@ func main() {
 
 	//createJobs()
 	creatCarrerTalk()
+	//createNews()
+
 }

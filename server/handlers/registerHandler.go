@@ -91,6 +91,7 @@ func RegisterRouter(router *httprouter.Router) {
 
 		UrlPrefix:  "/global",
 		dbOperator: dbOperater.NewAppDBoperator(),
+		validate:   &baseValidate{},
 	}
 
 	var accoutHandler = accountHandle{
@@ -105,6 +106,13 @@ func RegisterRouter(router *httprouter.Router) {
 		db:        dbOperater.NewListDboperater(),
 	}
 
+	// jobs
+	var jobHandler = jobHandler{
+		validate:   &baseValidate{},
+		dbOperator: dbOperater.NewJobDbOperator(),
+		UrlPrefix:  "/job",
+	}
+
 	var testh = TestHandler{
 		UrlPrefix: "/test",
 	}
@@ -113,6 +121,7 @@ func RegisterRouter(router *httprouter.Router) {
 	{
 		global.GET("/guidance", apphandler.AppGuidanceItems)
 		global.GET("/advise/image", apphandler.AppAdvitiseImageURL)
+		global.POST("/news", apphandler.News)
 
 	}
 
@@ -142,6 +151,11 @@ func RegisterRouter(router *httprouter.Router) {
 		homePage.POST("/jobs", lhandler.personalityJobs)
 		homePage.GET("/recommand", lhandler.personalRecommand)
 
+	}
+	job := rg.NewGroupRouter(jobHandler.UrlPrefix, router)
+	{
+
+		job.POST("/kind/:kind", jobHandler.FindJobKind)
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)
