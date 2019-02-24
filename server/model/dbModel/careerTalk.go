@@ -16,6 +16,8 @@ const (
 type CareerTalk struct {
 	BaseModel `json:"-"`
 	College   string `json:"college"`
+	// 城市
+	City string `json:"city"`
 	// 具体地址
 	Address string `json:"address"`
 	// 简写地址
@@ -30,6 +32,10 @@ type CareerTalk struct {
 	ContentType   contentType    `gorm:"type:contentType"  json:"content_type"`
 	BusinessField pq.StringArray `gorm:"type:text[]" json:"business_field"`
 	Majors        pq.StringArray `gorm:"type:text[]" json:"majors"`
+
+	// 位置
+	Latitude  float64 `gorm:"type:numeric" json:"latitude"`
+	Longitude float64 `gorm:"type:numeric" json:"longitude"`
 
 	// 关联的公司
 	CompanyID string  `gorm:"ForeignKey:CompanyID;not null" json:"company_id"`

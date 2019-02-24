@@ -9,9 +9,9 @@ import (
 type jobType string
 
 const (
-	Intern      jobType = "intern"
-	Graduate    jobType = "graduate"
-	OnlineApply jobType = "onlineApply"
+	intern      jobType = "intern"
+	graduate    jobType = "graduate"
+	onlineApply jobType = "onlineApply"
 	All         jobType = "all"
 )
 
@@ -24,7 +24,7 @@ type CompuseJobs struct {
 	NeedSkills  string `json:"need_skills"`
 	WorkContent string `json:"work_content"`
 	// 行业领域
-	BussinesField pq.StringArray `gorm:"type:text[]" json:"bussines_field"`
+	BusinessField pq.StringArray `gorm:"type:text[]" json:"business_field"`
 	// 专业领域
 	Major pq.StringArray `gorm:"type:text[]" json:"major"`
 	// 标签
@@ -51,6 +51,8 @@ type InternJobs struct {
 	// 每周实习天数
 	Days   int `json:"days"`
 	Months int `json:"months"`
+	// 实习日薪
+	PayDay int `json:"pay_day"`
 	// 可以转正
 	CanTransfer bool `json:"can_transfer"`
 }

@@ -21,7 +21,8 @@ func CreateTables() {
 		&dbModel.User{}, &dbModel.SocialAccount{},
 		&dbModel.Banners{}, &dbModel.LatestNews{}, &dbModel.JobCategory{}, &dbModel.TopJobs{},
 		&dbModel.CareerTalk{}, &dbModel.UserApplyCarrerTalk{}, &dbModel.Company{}, &dbModel.CompuseJobs{}, &dbModel.InternJobs{},
-		&dbModel.UserApplyJobs{}, &dbModel.ApplyClassify{}).Error
+		&dbModel.UserApplyJobs{}, &dbModel.ApplyClassify{}, &dbModel.TopWords{}, &dbModel.OnlineApply{},
+		&dbModel.UserOnlineApply{}).Error
 
 	if err != nil {
 		gLog.LOG_PANIC(err)

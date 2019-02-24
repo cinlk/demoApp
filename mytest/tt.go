@@ -4,11 +4,22 @@ import (
 	"demoApp/server/model/dbModel"
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"math/rand"
 	"strconv"
 	"time"
 )
 
 var testDB *gorm.DB
+
+type point struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+type gistModel struct {
+	gorm.Model
+	Name  string
+	Point point
+}
 
 func loadDB() {
 
@@ -27,6 +38,34 @@ func loadDB() {
 	testDB.DB().SetMaxIdleConns(3)
 	testDB.DB().SetMaxIdleConns(1)
 
+	err = testDB.AutoMigrate(gistModel{}).Error
+	if err != nil {
+		fmt.Print(err)
+	}
+
+}
+
+func createInternJobs() {
+	for i := 0; i < 10; i++ {
+		item := dbModel.InternJobs{}
+		item.Id = "intern-jobs-" + strconv.Itoa(i)
+		item.Type = "intern"
+		item.Name = "研发订单"
+		item.CompanyID = "companyID"
+		item.IconURL = "http://icons.iconarchive.com/icons/blackvariant/button-ui-system-folders-drives/1024/Developer-icon.png"
+		item.LocationCity = []string{"上海", "北京", "成都"}
+		item.ReviewCounts = rand.Int63n(100)
+		item.Education = "本科"
+		item.BusinessField = []string{"运维", "产品", "设计"}
+		item.Days = rand.Intn(7)
+		item.Months = rand.Intn(12)
+		item.PayDay = rand.Intn(400)
+		item.CanTransfer = i%2 == 0
+		err := testDB.FirstOrCreate(&item).Error
+		if err != nil {
+			return
+		}
+	}
 }
 
 func createJobs() {
@@ -49,6 +88,28 @@ func createJobs() {
 		}
 	}
 
+}
+
+func createOnlineApplys() {
+	for i := 0; i < 12; i++ {
+		item := dbModel.OnlineApply{}
+		item.Id = "网申" + strconv.Itoa(i)
+		item.CompanyID = "companyID"
+		item.Name = "测试完善"
+		t := time.Now().Add(time.Hour * 5)
+		item.EndTime = &t
+		item.LocationCity = []string{"北京", "上海", "深圳"}
+		item.BusinessField = []string{"教育", "医疗", "互联网"}
+		item.Outside = false
+		item.Link = "https://www.baidu.com"
+		item.ContentType = dbModel.Text
+		err := testDB.Create(&item).Error
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+	}
 }
 
 func creatCarrerTalk() {
@@ -84,6 +145,10 @@ func createNews() {
 
 		testDB.Create(&item)
 	}
+}
+
+func gistTest() {
+
 }
 
 func main() {
@@ -127,7 +192,9 @@ func main() {
 	//}
 
 	//createJobs()
-	creatCarrerTalk()
+	//creatCarrerTalk()
 	//createNews()
+	//createOnlineApplys()
+	createInternJobs()
 
 }

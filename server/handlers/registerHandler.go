@@ -11,6 +11,7 @@ import (
 	"goframework/extension"
 	"goframework/utils/appJson"
 	"net/http"
+	"reflect"
 )
 
 //  协议处理基础功能
@@ -46,6 +47,66 @@ func (b *baseValidate) Validate(r *http.Request, obj interface{}) error {
 	defer r.Body.Close()
 
 	return nil
+}
+
+// TODO 验证 必须的参数
+type jsonValidate struct {
+	requiredTag string
+}
+
+func (j *jsonValidate) Validate(r *http.Request, obj interface{}) error {
+
+	if r.Body == nil {
+		return &errorStatus.AppError{
+			Code: http.StatusBadRequest,
+			Err:  errors.New("empty body"),
+		}
+	}
+	err := appJson.JsonDecode(r.Body, obj)
+	if err != nil {
+		return &errorStatus.AppError{
+			Code: http.StatusBadRequest,
+			Err:  errors.WithMessage(err, fmt.Sprintf("decode data %+v failed", obj)),
+		}
+	}
+	defer r.Body.Close()
+
+	// bind check 的tag 检查
+	t := reflect.TypeOf(obj)
+	v := reflect.ValueOf(obj)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+		v = v.Elem()
+	}
+	for i := 0; i < t.NumField(); i++ {
+		if tagv, ok := t.Field(i).Tag.Lookup(j.requiredTag); ok {
+			if tagv != "required" {
+				continue
+			}
+			switch v.Field(i).Kind() {
+			case reflect.String:
+				if v.Field(i).String() == "" {
+					return &errorStatus.AppError{
+						Code: http.StatusBadRequest,
+						Err: errors.New(fmt.Sprintf("field with name %s is invalidate",
+							t.Field(i).Name)),
+					}
+				}
+			case reflect.Uint:
+				if v.Field(i).Uint() == 0 {
+					return &errorStatus.AppError{
+						Code: http.StatusBadRequest,
+						Err: errors.New(fmt.Sprintf("field with name %s is invalidate",
+							t.Field(i).Name)),
+					}
+				}
+			}
+
+		}
+	}
+
+	return nil
+
 }
 
 type baseHandler struct {
@@ -113,6 +174,14 @@ func RegisterRouter(router *httprouter.Router) {
 		UrlPrefix:  "/job",
 	}
 
+	// search
+	var searchHandler = searchHandler{
+		UrlPrefix: "/search",
+		db:        dbOperater.NewSearchDboperator(),
+		validate: &jsonValidate{
+			requiredTag: "binding",
+		},
+	}
 	var testh = TestHandler{
 		UrlPrefix: "/test",
 	}
@@ -122,6 +191,13 @@ func RegisterRouter(router *httprouter.Router) {
 		global.GET("/guidance", apphandler.AppGuidanceItems)
 		global.GET("/advise/image", apphandler.AppAdvitiseImageURL)
 		global.POST("/news", apphandler.News)
+		global.GET("/citys", apphandler.Citys)
+		global.GET("/business/field", apphandler.BusinessField)
+		global.GET("/subBusiness/field", apphandler.BusinessFieldJob)
+		global.GET("/company/type", apphandler.CompanyType)
+		global.GET("/intern/condition", apphandler.InternCondition)
+		global.GET("/city/college", apphandler.CitysCollege)
+		//global.GET("/near/meetings", )
 
 	}
 
@@ -151,11 +227,26 @@ func RegisterRouter(router *httprouter.Router) {
 		homePage.POST("/jobs", lhandler.personalityJobs)
 		homePage.GET("/recommand", lhandler.personalRecommand)
 
+		homePage.POST("/near/meetings", lhandler.nearBy)
+		homePage.POST("/near/company", lhandler.nearBy)
+
 	}
 	job := rg.NewGroupRouter(jobHandler.UrlPrefix, router)
 	{
 
 		job.POST("/kind/:kind", jobHandler.FindJobKind)
+	}
+
+	search := rg.NewGroupRouter(searchHandler.UrlPrefix, router)
+	{
+		search.GET("/word/:type", searchHandler.TopWords)
+		search.POST("/similar", searchHandler.searchKeyword)
+		search.POST("/online", searchHandler.searchOnlineApply)
+		search.POST("/company", searchHandler.searchCompany)
+		search.POST("/careerTalk", searchHandler.searchCarrerTalk)
+		search.POST("/graduate", searchHandler.searchGraduateJobs)
+		search.POST("/intern", searchHandler.searchInternJobs)
+
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)

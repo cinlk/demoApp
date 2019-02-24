@@ -45,4 +45,27 @@ type HttpJobListModel struct {
 	Degree      string         `json:"degree"`
 	ReviewCount int64          `json:"review_count"`
 	CreatedTime tString        `json:"created_time"`
+	// search 需要的数据
+	CompanyType   string         `json:"company_type"`
+	BusinessField pq.StringArray `json:"business_field"`
+}
+
+// 实习
+type HttpInternListModel struct {
+	JobID       string         `json:"job_id"`
+	Type        string         `json:"type"`
+	IconURL     string         `json:"icon_url"`
+	CompanyName string         `json:"company_name"`
+	JobName     string         `json:"job_name"`
+	Address     pq.StringArray `json:"address"`
+	Degree      string         `json:"degree"`
+	ReviewCount int64          `json:"review_count"`
+	CreatedTime tString        `json:"created_time"`
+	// search 需要的数据
+	Days   int `json:"days"`
+	Months int `json:"months"`
+	PayDay int `json:"pay_day"`
+	// 转正
+	IsTransfer    bool           `json:"is_transfer"`
+	BusinessField pq.StringArray `json:"business_field"`
 }
