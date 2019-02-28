@@ -66,7 +66,7 @@ func (l *ListDboperater) OnlineApplyClass() []dbModel.ApplyClassify {
 	return c
 }
 
-func (l *ListDboperater) JobList(offset, limit int) []httpModel.HttpJobListModel {
+func (l *ListDboperater) JobList(offset, limit int64) []httpModel.HttpJobListModel {
 
 	// first compuse jobs
 	// second intern jobs

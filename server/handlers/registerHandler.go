@@ -182,6 +182,17 @@ func RegisterRouter(router *httprouter.Router) {
 			requiredTag: "binding",
 		},
 	}
+	//
+	var recruitHandler = recruiteListHandle{
+		UrlPrefix: "/recruite",
+		dbOperator: dbOperater.NewRecruiteDboperator(),
+		validate: &jsonValidate{
+			requiredTag: "binding",
+		},
+
+	}
+
+
 	var testh = TestHandler{
 		UrlPrefix: "/test",
 	}
@@ -246,6 +257,21 @@ func RegisterRouter(router *httprouter.Router) {
 		search.POST("/careerTalk", searchHandler.searchCarrerTalk)
 		search.POST("/graduate", searchHandler.searchGraduateJobs)
 		search.POST("/intern", searchHandler.searchInternJobs)
+
+	}
+
+	recruit := rg.NewGroupRouter(recruitHandler.UrlPrefix, router)
+	{
+		recruit.POST("/online", recruitHandler.onlineApplys)
+		recruit.POST("/carreerTalk", recruitHandler.careerTalks)
+		recruit.POST("/company", recruitHandler.companys)
+		recruit.POST("/graduate", recruitHandler.graduatejobs)
+		recruit.POST("/intern", recruitHandler.internjobs)
+		recruit.GET("/online/:id", recruitHandler.findOnlineApply)
+		recruit.GET("/careerTalk/:id", recruitHandler.findCareerTalk)
+		recruit.GET("/company/:id", recruitHandler.findCompany)
+		recruit.GET("/graduate/:id", recruitHandler.findGraduate)
+		recruit.GET("/intern/:id", recruitHandler.findInternJob)
 
 	}
 

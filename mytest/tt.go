@@ -147,6 +147,8 @@ func createNews() {
 	}
 }
 
+
+
 func gistTest() {
 
 }
@@ -195,6 +197,14 @@ func main() {
 	//creatCarrerTalk()
 	//createNews()
 	//createOnlineApplys()
-	createInternJobs()
+	//createInternJobs()
+	err := testDB.Create(&dbModel.UserOnlineApply{
+		UserId: "fbcc24c0-2561-11e9-a844-a0999b089907",
+		OnlineApplyID: "网申5",
+		IsApply: true,
+	}).Error
+	if err != nil{
+		print(err)
+	}
 
 }

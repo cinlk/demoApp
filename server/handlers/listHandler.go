@@ -27,8 +27,8 @@ type nearByReq struct {
 }
 
 type queryPage struct {
-	Offset int `json:"offset"`
-	Limit  int `json:"limit"`
+	Offset int64 `json:"offset" binding:"required"`
+	Limit  int64 `json:"limit"  binding:"required"`
 }
 
 type recommands struct {

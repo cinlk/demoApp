@@ -3,7 +3,12 @@ package httpModel
 import "github.com/lib/pq"
 
 type HttpOnlineApplyModel struct {
-	httpBaseMode
+	Id   string `json:"id"`
+	Link string `json:"link,omitempty"`
+	Name string `json:"name,omitempty"`
+	Icon string `json:"icon,omitempty"`
+	// user relation
+	IsApply  bool `json:"is_apply"`
 }
 
 type HttpOnlineApplyListModel struct {
@@ -16,4 +21,5 @@ type HttpOnlineApplyListModel struct {
 	CompanyName    string         `json:"company_name"`
 	OutSide        bool           `json:"out_side"`
 	Link           string         `json:"link"`
+	
 }

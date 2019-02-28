@@ -47,6 +47,14 @@ func CreateTables() {
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
+	err = orm.DB.Model(&dbModel.UserOnlineApply{}).AddForeignKey("user_id","\"user\"(uuid)","CASCADE","CASCADE").Error
+	if err != nil{
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.UserOnlineApply{}).AddForeignKey("online_apply_id", "online_apply(id)", "CASCADE", "CASCADE").Error
+	if err != nil{
+		gLog.LOG_PANIC(err)
+	}
 }
 
 func CloseDB() {
