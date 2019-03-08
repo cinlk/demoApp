@@ -159,3 +159,16 @@ func (app *appHandler) CitysCollege(w http.ResponseWriter, r *http.Request, _ ht
 
 	app.JSON(w, citysCollege, http.StatusOK)
 }
+
+// 职位举报信息列表
+
+func (app *appHandler) jobWarns(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+	var warns = struct {
+		Warns []string `json:"warns"`
+	}{
+		Warns: []string{"描述不符合", "虚假信息", "带我去的无群", "带我飞外国人", "核桃仁和投入和", "反而更让他很突然很突然", "其他"},
+	}
+
+	app.JSON(w, warns, http.StatusOK)
+}

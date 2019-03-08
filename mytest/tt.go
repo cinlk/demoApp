@@ -147,64 +147,89 @@ func createNews() {
 	}
 }
 
+func createRecruiter() {
+	var before = time.Now().Add(-time.Hour)
+	var r = dbModel.Recruiter{
+		Phone:     "13718754627",
+		Uuid:      "12345",
+		Name:      "我是小王",
+		CompanyId: "公司1",
+		Title:     "总监",
+		Online:    true,
+		UserIcon:  "http://www.sucaijishi.com/uploadfile/2018/0508/20180508023725429.png",
+		LastLogin: &before,
+	}
+	err := testDB.Create(&r).Error
+	if err != nil {
+		print(err)
+	}
+}
 
+func relatedQuery() {
 
-func gistTest() {
+	// 1
+	var recruiters []dbModel.Recruiter
+	var c dbModel.Company
+	err := testDB.Model(&dbModel.Company{}).
+		Where("id = ?", "companyID").Find(&c).Error
+
+	err = testDB.Model(&c).Select("name").Association("Recruiters").Find(&recruiters).Error
+	if err != nil {
+		print(err.Error())
+		return
+	}
+	fmt.Println(c)
+	fmt.Println(recruiters)
+
+	// 2
+
+	var c1 dbModel.Company
+	var fc = recruiters[0]
+	// 默认使用主键id
+	err = testDB.Model(fc).Related(&c1, "companyID").Error
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(c1)
 
 }
+
+func testRecruitRelated() {
+
+	//  3 r-c
+	var rec1 dbModel.Recruiter
+	err := testDB.Model(rec1).Where("uuid = ?", "12345").Find(&rec1).Error
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(rec1)
+
+	err = testDB.Model(rec1).Association("CompusJobs").Find(&rec1.CompusJobs).Error
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	err = testDB.Model(rec1).Association("InternJobs").Find(&rec1.InternJobs).Error
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(len(rec1.CompusJobs), len(rec1.InternJobs))
+}
+
+//print(recruiters)
 
 func main() {
 
 	loadDB()
-
-	//var company dbModel.Company
-	// find talks
-	//c := &dbModel.CarrerTalk{}
-	//c.Id = "dwqdqwd"
-	//c.CompanyID = "companyID"
-	//err := testDB.Create(&c).Error
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//c := dbModel.Company{}
-	//c.Id = "12345"
-	//c.Name = "年你啊你按"
-	//err := testDB.Model(&dbModel.Company{}).Create(&c).Error
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//c := []dbModel.Banners{
-	//	dbModel.Banners{
-	//		ImageURL: "http://www.papertraildesign.com/wp-content/uploads/2017/08/Buffalo-Plaid-Banner-Letters-B.png",
-	//		Link:     "https://news.sina.com.cn/c/2019-02-06/doc-ihrfqzka3892512.shtml",
-	//	},
-	//	dbModel.Banners{
-	//		ImageURL: "https://tse3.mm.bing.net/th?id=OIP.Dt_kEuhIXzMgVaoiiwJbrQHaFj&pid=Api",
-	//		Link:     "https://news.sina.com.cn/c/2019-02-06/doc-ihrfqzka3892512.shtml",
-	//	},
-	//	dbModel.Banners{
-	//		ImageURL: "https://tse3.mm.bing.net/th?id=OIP.mmQ2swrg-DbkW4TT2nTIjgHaEK&pid=Api",
-	//		Link:     "https://news.sina.com.cn/c/2019-02-06/doc-ihrfqzka3892512.shtml",
-	//	},
-	//	dbModel.Banners{
-	//		ImageURL: "http://www.obfuscata.com/wp-content/uploads/2017/11/Youtube-banner-template-23.jpg",
-	//		Link:     "https://news.sina.com.cn/c/2019-02-06/doc-ihrfqzka3892512.shtml",
-	//	},
-	//}
-
 	//createJobs()
 	//creatCarrerTalk()
 	//createNews()
 	//createOnlineApplys()
 	//createInternJobs()
-	err := testDB.Create(&dbModel.UserOnlineApply{
-		UserId: "fbcc24c0-2561-11e9-a844-a0999b089907",
-		OnlineApplyID: "网申5",
-		IsApply: true,
-	}).Error
-	if err != nil{
-		print(err)
-	}
-
+	//relatedQuery()
+	testRecruitRelated()
 }

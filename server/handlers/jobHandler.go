@@ -39,9 +39,9 @@ func (j *jobHandler) FindJobKind(w http.ResponseWriter, r *http.Request, para ht
 
 	//res := j.dbOperator.JobsKind(kind, query.Offset, query.Limit)
 
-	//var httpres []httpModel.HttpJobModel
+	//var httpres []httpModel.HttpGraduateModel
 	//for _, item := range res {
-	//	m := httpModel.HttpJobModel{}
+	//	m := httpModel.HttpGraduateModel{}
 	//	m.Id = item.Id
 	//	m.Recruiter = nil
 	//	m.Validate = item.IsValidate

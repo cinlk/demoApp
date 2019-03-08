@@ -10,20 +10,16 @@ import (
 	"net/http"
 )
 
-
-const  (
-
+const (
 	meetings = "meetings"
-	company = "company"
+	company  = "company"
 )
 
 type nearByReq struct {
-	
-	Distance uint `json:"distance"`
-	Latitude float64 `json:"latitude"`
+	Distance  uint    `json:"distance"`
+	Latitude  float64 `json:"latitude"`
 	Lontitude float64 `json:"lontitude"`
-	Type string `json:"type"`
-	
+	Type      string  `json:"type"`
 }
 
 type queryPage struct {
@@ -115,11 +111,11 @@ func (l *listHandler) personalRecommand(w http.ResponseWriter, r *http.Request, 
 }
 
 // TODO 附近的
-func (l *listHandler) nearBy(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+func (l *listHandler) nearBy(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
 
 	var req nearByReq
 	err := l.validate.Validate(r, &req)
-	if err != nil{
+	if err != nil {
 		l.ERROR(w, err, http.StatusBadRequest)
 		return
 	}
@@ -127,7 +123,7 @@ func (l *listHandler) nearBy(w http.ResponseWriter, r *http.Request, param httpr
 	switch req.Type {
 	case meetings:
 		res, err := l.db.NearByMeetings(req.Latitude, req.Lontitude, req.Distance)
-		if err != nil{
+		if err != nil {
 			l.ERROR(w, err, http.StatusUnprocessableEntity)
 			return
 		}
@@ -136,7 +132,7 @@ func (l *listHandler) nearBy(w http.ResponseWriter, r *http.Request, param httpr
 	case company:
 
 		res, err := l.db.NearyByCompany(req.Latitude, req.Lontitude, req.Distance)
-		if err != nil{
+		if err != nil {
 			l.ERROR(w, err, http.StatusUnprocessableEntity)
 			return
 		}
@@ -147,10 +143,4 @@ func (l *listHandler) nearBy(w http.ResponseWriter, r *http.Request, param httpr
 		return
 	}
 
-
-
-
-	
-	
 }
-

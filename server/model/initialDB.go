@@ -22,7 +22,7 @@ func CreateTables() {
 		&dbModel.Banners{}, &dbModel.LatestNews{}, &dbModel.JobCategory{}, &dbModel.TopJobs{},
 		&dbModel.CareerTalk{}, &dbModel.UserApplyCarrerTalk{}, &dbModel.Company{}, &dbModel.CompuseJobs{}, &dbModel.InternJobs{},
 		&dbModel.UserApplyJobs{}, &dbModel.ApplyClassify{}, &dbModel.TopWords{}, &dbModel.OnlineApply{},
-		&dbModel.UserOnlineApply{}).Error
+		&dbModel.UserOnlineApply{}, &dbModel.UserCompanyRelate{}).Error
 
 	if err != nil {
 		gLog.LOG_PANIC(err)
@@ -47,12 +47,28 @@ func CreateTables() {
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
-	err = orm.DB.Model(&dbModel.UserOnlineApply{}).AddForeignKey("user_id","\"user\"(uuid)","CASCADE","CASCADE").Error
-	if err != nil{
+	err = orm.DB.Model(&dbModel.UserOnlineApply{}).AddForeignKey("user_id", "\"user\"(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
 	err = orm.DB.Model(&dbModel.UserOnlineApply{}).AddForeignKey("online_apply_id", "online_apply(id)", "CASCADE", "CASCADE").Error
-	if err != nil{
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.CompuseJobs{}).AddForeignKey("recruiter_uuid", "recruiter(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.InternJobs{}).AddForeignKey("recruiter_uuid", "recruiter(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.UserApplyCarrerTalk{}).AddForeignKey("career_talk_id", "career_talk(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.Recruiter{}).AddForeignKey("company_id", "company(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
 }

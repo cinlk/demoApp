@@ -32,9 +32,4 @@ func (t tString) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Itoa(int(m.Unix()))), nil
 }
 
-type httpBaseMode struct {
-	Id   string `json:"id"`
-	Link string `json:"link,omitempty"`
-	Name string `json:"name,omitempty"`
-	Icon string `json:"icon,omitempty"`
-}
+

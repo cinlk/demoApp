@@ -38,8 +38,8 @@ type CareerTalk struct {
 	Longitude float64 `gorm:"type:numeric" json:"longitude"`
 
 	// 关联的公司
-	CompanyID string  `gorm:"ForeignKey:CompanyID;not null" json:"company_id"`
-	Company   Company `gorm:"ForeignKey:CompanyID;AssociationForeignKey:CompanyID" json:"company"`
+	CompanyID string `gorm:"ForeignKey:CompanyID;not null" json:"company_id"`
+	//Company   Company `gorm:"ForeignKey:CompanyID;AssociationForeignKey:CompanyID" json:"company"`
 	// 用户
 	//UserCarrerTalk []UserApplyCarrerTalk `gorm:"ForeignKey:CarrerTalkID;AssociationForeignKey:CarrerTalkID" json:"users_talks"`
 }
@@ -48,7 +48,7 @@ type CareerTalk struct {
 type UserApplyCarrerTalk struct {
 	gorm.Model   `json:"-"`
 	UserId       string `gorm:"ForeignKey:UserId;not null" json:"user_id"`
-	CarrerTalkID string `gorm:"ForeignKey:CarrerTalkID;not null" json:"carrer_talk_id"`
+	CareerTalkID string `gorm:"ForeignKey:CareerTalkID;not null" json:"career_talk_id"`
 	IsCollected  bool   `gorm:"default:false" json:"is_collected"`
 	//IsApply      bool   `gorm:"default:false" json:"is_apply"`
 }

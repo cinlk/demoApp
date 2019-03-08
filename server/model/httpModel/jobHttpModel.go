@@ -4,35 +4,43 @@ import (
 	"github.com/lib/pq"
 )
 
-type HttpJobModel struct {
-	httpBaseMode
+type HttpGraduateModel struct {
+	Id          string  `json:"id"`
+	Name        string  `json:"name"`
+	IsValidate  bool    `json:"is_validate"`
+	IsApply     bool    `json:"is_apply"`
+	CreatedTime tString `json:"created_time,omitempty"`
+	IsCollected bool    `json:"is_collected"`
+	IconURL     string  `json:"icon_url"`
 
-	Validate      bool                `json:"validate"`
-	Applied       bool                `json:"applied"`
-	CreatedTime   int64               `json:"created_time"`
-	Collected     bool                `json:"collected"`
-	Talked        bool                `json:"is_talk"`
-	Type          string              `json:"type"`
-	Benefits      string              `json:"benefits"`
-	Comapany      *HttpCompanyModel   `json:"comapany,omitempty"`
-	Recruiter     *HttpRecruiterModel `json:"hr,omitempty"`
-	NeedSkills    string              `json:"requirement"`
-	WorkContent   string              `json:"works"`
-	BussinesField []string            `json:"industry"`
-	Major         []string            `json:"major"`
-	Tags          []string            `json:"job_tags"`
-	ReviewCounts  int64               `json:"read_num"`
-	LocationCity  []string            `json:"city"`
-	Salary        string              `json:"salary"`
-	Education     string              `json:"education"`
-	ApplyEndTime  int64               `json:"apply_end_time"`
+	IsTalk bool   `json:"is_talk"`
+	Type   string `json:"type"`
+	// 福利描述
+	Benefits      string                 `json:"benefits"`
+	CompanyId     string                 `json:"company_id"`
+	Company       HttpSimpleCompanyModel `json:"company,omitempty"`
+	RecruiterUUID string                 `json:"recruiter_uuid"`
+	Recruiter     HttpRecruiterModel     `json:"recruiter,omitempty"`
+	Address       pq.StringArray         `json:"address"`
+	City          pq.StringArray         `json:"city"`
+	NeedSkills    string                 `json:"need_skills"`
+	WorkContent   string                 `json:"work_content"`
+	BusinesField  pq.StringArray         `json:"business_field"`
+	Major         pq.StringArray         `json:"major"`
+	JobTags       pq.StringArray         `json:"job_tags"`
+	ReviewCounts  int64                  `json:"review_counts"`
+
+	Salary       string  `json:"salary"`
+	Education    string  `json:"education"`
+	ApplyEndTime tString `json:"apply_end_time,omitempty"`
 }
 
 type HttpInternJobModel struct {
-	HttpJobModel
-	Days        int `json:"per_day"`
-	Months      int `json:"month"`
-	CanTransfer int `json:"is_staff"`
+	HttpGraduateModel
+	PayDay      int  `json:"pay_day"`
+	Days        int  `json:"days"`
+	Months      int  `json:"months"`
+	CanTransfer bool `json:"can_transfer"`
 }
 
 type HttpJobListModel struct {
@@ -41,13 +49,13 @@ type HttpJobListModel struct {
 	IconURL     string         `json:"icon_url"`
 	CompanyName string         `json:"company_name"`
 	JobName     string         `json:"job_name"`
-	Address     pq.StringArray `json:"address"`
+	Address     pq.StringArray `json:"address,omitempty"`
 	Degree      string         `json:"degree"`
 	ReviewCount int64          `json:"review_count"`
-	CreatedTime tString        `json:"created_time"`
+	CreatedTime tString        `json:"created_time,omitempty"`
 	// search 需要的数据
 	CompanyType   string         `json:"company_type"`
-	BusinessField pq.StringArray `json:"business_field"`
+	BusinessField pq.StringArray `json:"business_field,omitempty"`
 }
 
 // 实习
@@ -57,10 +65,10 @@ type HttpInternListModel struct {
 	IconURL     string         `json:"icon_url"`
 	CompanyName string         `json:"company_name"`
 	JobName     string         `json:"job_name"`
-	Address     pq.StringArray `json:"address"`
+	Address     pq.StringArray `json:"address,omitempty"`
 	Degree      string         `json:"degree"`
 	ReviewCount int64          `json:"review_count"`
-	CreatedTime tString        `json:"created_time"`
+	CreatedTime tString        `json:"created_time,omitempty"`
 	// search 需要的数据
 	Days   int `json:"days"`
 	Months int `json:"months"`
@@ -68,4 +76,15 @@ type HttpInternListModel struct {
 	// 转正
 	IsTransfer    bool           `json:"is_transfer"`
 	BusinessField pq.StringArray `json:"business_field"`
+}
+
+type HttpCompanyTagJobsModel struct {
+	Id        string         `json:"id"`
+	Type      string         `json:"type"`
+	Name      string         `json:"name"`
+	Address   pq.StringArray `json:"address,omitempty"`
+	Education string         `json:"education"`
+	//IconURL     string         `json:"icon_url"`
+	CreatedTime tString        `json:"created_time,omitempty"`
+	Tags        pq.StringArray `json:"tags,omitempty"`
 }

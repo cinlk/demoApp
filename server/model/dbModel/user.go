@@ -36,14 +36,14 @@ type Account struct {
 	gorm.Model `json:"-"`
 	Phone      string    `gorm:"primary_key;unique" json:"phone"`
 	Password   string    `json:"password"`
-	User       User      `gorm:"ForeignKey:Phone;AssociationForeignKey:Phone" json:"user"`
-	Recruiter  Recruiter `gorm:"ForeignKey:Phone;AssociationForeignKey:Phone" json:"recruiter"`
+	User       User      `gorm:"ForeignKey:Phone" json:"user"`
+	Recruiter  Recruiter `gorm:"ForeignKey:Phone" json:"recruiter"`
 	// 当前角色 和 终端类型
 	Role       string `gorm:"type:text;default:'seeker'" json:"role"`
 	DeviceType string `json:"device_type"`
 
 	// 可以有多个不同类型的第三方账号
-	RelatedAccount []SocialAccount `gorm:"ForeignKey:Phone;AssociationForeignKey:Phone" json:"-"`
+	RelatedAccount []SocialAccount `gorm:"ForeignKey:Phone" json:"-"`
 }
 
 // 第三方账号(相同type的phone 唯一)
@@ -69,14 +69,19 @@ type User struct {
 
 type Recruiter struct {
 	gorm.Model `json:"-"`
-	Phone      string     `gorm:"ForeignKey:phone" json:"phone"`
-	Uuid       string     `gorm:"primary_key;unique; type:text" json:"uuid"`
-	Name       string     `json:"name"`
-	Company    string     `json:"company"`
-	State      int        `json:"state"`
-	Online     bool       `gorm:"default:false" json:"online"`
-	LastLogin  *time.Time `gorm:"default:now()" json:"-"`
-	Account    *Account   `gorm:"ForeignKey:Phone;AssociationForeignKey:Phone"`
+	Phone      string        `gorm:"ForeignKey:phone" json:"phone"`
+	Uuid       string        `gorm:"primary_key;unique; type:text" json:"uuid"`
+	Name       string        `json:"name"`
+	Company    string        `json:"company"`
+	CompanyId  string        `json:"company_id"`
+	UserIcon   string        `json:"user_icon"`
+	Title      string        `json:"title"`
+	State      int           `json:"state"`
+	Online     bool          `gorm:"default:false" json:"online"`
+	LastLogin  *time.Time    `gorm:"default:now()" json:"-"`
+	Account    *Account      `gorm:"ForeignKey:Phone"`
+	CompusJobs []CompuseJobs `gorm:"ForeignKey:RecruiterUUID" json:"compus_jobs,omitempty"`
+	InternJobs []InternJobs  `gorm:"ForeignKey:RecruiterUUID" json:"intern_jobs,omitempty"`
 }
 
 func (a *Account) FindAssociateUserByColume(orm *gorm.DB, name string) (uuid string, t interface{}) {

@@ -8,7 +8,6 @@ import (
 	"math/rand"
 )
 
-
 type ListDboperater struct {
 	orm *gorm.DB
 }
@@ -83,32 +82,31 @@ func (l *ListDboperater) JobList(offset, limit int64) []httpModel.HttpJobListMod
 
 }
 
-func (l *ListDboperater) Jobs(offset, limit int) []dbModel.CompuseJobs {
+//func (l *ListDboperater) Jobs(offset, limit int) []dbModel.CompuseJobs {
+//
+//	var jobs = []dbModel.CompuseJobs{}
+//
+//	_ = orm.DB.Model(&dbModel.CompuseJobs{}).Offset(offset).Limit(limit).Find(&jobs)
+//
+//	// 获取关联的数据 公司 和发布职位者
+//	for i := 0; i < len(jobs); i++ {
+//		orm.DB.Model(&dbModel.Company{}).Where("id = ?", jobs[i].CompanyID).Find(&jobs[i].Company)
+//	}
+//	return jobs
+//}
 
-	var jobs = []dbModel.CompuseJobs{}
-
-	_ = orm.DB.Model(&dbModel.CompuseJobs{}).Offset(offset).Limit(limit).Find(&jobs)
-
-	// 获取关联的数据 公司 和发布职位者
-	for i := 0; i < len(jobs); i++ {
-		orm.DB.Model(&dbModel.Company{}).Where("id = ?", jobs[i].CompanyID).Find(&jobs[i].Company)
-	}
-	return jobs
-}
-
-
-func (l *ListDboperater) NearByMeetings(lat, lon float64, distance uint) ([]httpModel.HttpNearByCareerTalkModel ,error){
+func (l *ListDboperater) NearByMeetings(lat, lon float64, distance uint) ([]httpModel.HttpNearByCareerTalkModel, error) {
 
 	var meetings = []httpModel.HttpNearByCareerTalkModel{}
 	//err := orm.DB.Model(&dbModel.CareerTalk{}).Raw("select career_talk.id, carrer_talk.icon_url, " +
 	//	"career_talk.").
 	//	Scan(&meetings).Error
 
-	for i := 0; i < 10; i ++{
+	for i := 0; i < 10; i++ {
 		meetings = append(meetings, httpModel.HttpNearByCareerTalkModel{
-			MeetingID: "meetingID",
+			MeetingID:      "meetingID",
 			CollegeIconURL: "http://icons.iconarchive.com/icons/blackvariant/button-ui-requests-4/1024/RemoteMouse-icon.png",
-			Distance: float64(rand.Intn(1000)),
+			Distance:       float64(rand.Intn(1000)),
 			//StartTime: time.Now().Add(i*time.Hour),
 			College: "大学",
 			Address: "上海市湖江村地址",
@@ -118,23 +116,22 @@ func (l *ListDboperater) NearByMeetings(lat, lon float64, distance uint) ([]http
 
 }
 
-func (l *ListDboperater) NearyByCompany(lat, lon float64, distance uint) ([]httpModel.HttpNearByCompanyModel, error){
+func (l *ListDboperater) NearyByCompany(lat, lon float64, distance uint) ([]httpModel.HttpNearByCompanyModel, error) {
 
 	var companys = []httpModel.HttpNearByCompanyModel{}
 	//err := orm.DB.Model(&dbModel.Company{}).Raw("select ").Scan(&companys).Error
-	for i := 0; i < 10; i ++ {
+	for i := 0; i < 10; i++ {
 		companys = append(companys, httpModel.HttpNearByCompanyModel{
-			CompanyID: "companyId",
+			CompanyID:      "companyId",
 			CompanyIconURL: "https://tse3.mm.bing.net/th?id=OIP.l4ll344Ee1OHJ5EwmQhaRgHaHa&pid=Api",
-			CompanyName: "公司名称",
-			BusinessField: []string{"我的地址1", "我的地址2"},
-			ReviewCount: 145,
-			Distance: float64((rand.Int31n(1000))),
+			CompanyName:    "公司名称",
+			BusinessField:  []string{"我的地址1", "我的地址2"},
+			ReviewCount:    145,
+			Distance:       float64((rand.Int31n(1000))),
 		})
 	}
 	return companys, nil
 }
-
 
 func NewListDboperater() *ListDboperater {
 

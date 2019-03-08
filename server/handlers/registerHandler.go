@@ -184,14 +184,12 @@ func RegisterRouter(router *httprouter.Router) {
 	}
 	//
 	var recruitHandler = recruiteListHandle{
-		UrlPrefix: "/recruite",
+		UrlPrefix:  "/recruite",
 		dbOperator: dbOperater.NewRecruiteDboperator(),
 		validate: &jsonValidate{
 			requiredTag: "binding",
 		},
-
 	}
-
 
 	var testh = TestHandler{
 		UrlPrefix: "/test",
@@ -209,6 +207,7 @@ func RegisterRouter(router *httprouter.Router) {
 		global.GET("/intern/condition", apphandler.InternCondition)
 		global.GET("/city/college", apphandler.CitysCollege)
 		//global.GET("/near/meetings", )
+		global.GET("/jobs/warns", apphandler.jobWarns)
 
 	}
 
@@ -268,10 +267,13 @@ func RegisterRouter(router *httprouter.Router) {
 		recruit.POST("/graduate", recruitHandler.graduatejobs)
 		recruit.POST("/intern", recruitHandler.internjobs)
 		recruit.GET("/online/:id", recruitHandler.findOnlineApply)
-		recruit.GET("/careerTalk/:id", recruitHandler.findCareerTalk)
+		recruit.GET("/meeting/:id", recruitHandler.findCareerTalk)
 		recruit.GET("/company/:id", recruitHandler.findCompany)
 		recruit.GET("/graduate/:id", recruitHandler.findGraduate)
 		recruit.GET("/intern/:id", recruitHandler.findInternJob)
+		recruit.GET("/recruiter/:id", recruitHandler.recruiterCompanyAndJobs)
+		recruit.POST("/tag/jobs", recruitHandler.companyTagJobs)
+		recruit.POST("/company/recruit/meeting", recruitHandler.companyRecruitMeeting)
 
 	}
 

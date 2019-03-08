@@ -4,11 +4,24 @@ import "github.com/lib/pq"
 
 type HttpOnlineApplyModel struct {
 	Id   string `json:"id"`
+	CompanyID   string `json:"company_id"`
 	Link string `json:"link,omitempty"`
 	Name string `json:"name,omitempty"`
-	Icon string `json:"icon,omitempty"`
+	IconURL string `json:"icon_url,omitempty"`
+	CreatedTime tString `json:"created_time"`
+	Company HttpCompanyModel `json:"company,omitempty"`
+	EndTime  tString `json:"end_time"`
+	Citys  pq.StringArray `json:"citys,omitempty"`
+	Positions pq.StringArray `json:"positions,omitempty"`
+	Major pq.StringArray `json:"major,omitempty"`
+	Content string `json:"content"`
+	ContentType  string `json:"content_type"`
+	OuterSide  bool `json:"outer_side"`
+
 	// user relation
-	IsApply  bool `json:"is_apply"`
+	IsCollected  bool `json:"is_collected"`
+
+
 }
 
 type HttpOnlineApplyListModel struct {
