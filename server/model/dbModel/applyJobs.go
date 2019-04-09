@@ -46,6 +46,8 @@ type CompuseJobs struct {
 	RecruiterUUID string `gorm:"ForeignKey:RecruiterUUID" json:"recruiter_id"`
 	//Recruiter     Recruiter     `gorm:"ForeignKey:Uuid;AssociationForeignKey:Uuid" json:"-"`
 	//UserApplyJob  UserApplyJobs `gorm:"ForeignKey:JobId;AssociationForeignKey:JobId" json:"-"`
+
+	Conversation SingleConversation `gorm:"AssociationForeignKey:JobID"`
 }
 
 type InternJobs struct {

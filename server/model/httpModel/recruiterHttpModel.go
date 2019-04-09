@@ -4,7 +4,10 @@ import "github.com/lib/pq"
 
 // 发布者
 type HttpRecruiterModel struct {
+	// 系统自带的id
 	UserID     string  `json:"user_id"`
+	// leancloud 账号id
+	LeanCloudAccount string `json:"lean_cloud_account"`
 	Name       string  `json:"name"`
 	UserIcon   string  `json:"user_icon"`
 	Title      string  `json:"title"`

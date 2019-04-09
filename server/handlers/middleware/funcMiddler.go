@@ -37,14 +37,14 @@ func AuthorizationVerify(handle httprouter.Handle) httprouter.Handle {
 			fmt.Println(claim.Role, r.URL.String())
 			if config.PolicyEnforce.Enforce(claim.Role, r.URL.String(), r.Method) == false {
 				gLog.LOG_INFO(fmt.Sprintf("user %s  with role %s "+
-					"cann't access url %s", claim.Uuid, claim.Role, r.URL.String()))
+					"can't access url %s", claim.Uuid, claim.Role, r.URL.String()))
 				//goto last
 				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 				return
 			}
 
-			r.Header.Set("USER_UUID", claim.Uuid)
-			r.Header.Set("USER_ROLE", claim.Role)
+			r.Header.Set(utils.USER_ID, claim.Uuid)
+			r.Header.Set(utils.USER_ROLE, claim.Role)
 			handle(w, r, param)
 			return
 		}

@@ -185,11 +185,22 @@ func (r *RecruiteDboperator) GraduatJobInfo(jobId, userId string) httpModel.Http
 	_ = r.orm.Model(&dbModel.Company{}).Where("id = ?", res.CompanyId).
 		Select("id as company_id, icon_url , name as company_name, " +
 			"citys, business_field, total_staff as staff").Scan(&res.Company)
-	_ = r.orm.Model(&dbModel.Recruiter{}).Where("uuid = ?", res.RecruiterUUID).
-		Select("uuid as user_id, name, user_icon, title, last_login as online_time, company").Scan(&res.Recruiter)
+	// 关联 recruiter 的leancloud 账号
+	_ = r.orm.Model(&dbModel.Recruiter{}).
+		Joins("left join lean_cloud_account on lean_cloud_account.uuid = recruiter.uuid ").Where("recruiter.uuid = ?", res.RecruiterUUID).
+		Select("recruiter.uuid as user_id, recruiter.name, recruiter.user_icon, recruiter.title, " +
+			"recruiter.last_login as online_time, recruiter.company, lean_cloud_account.user_id as lean_cloud_account").
+		Scan(&res.Recruiter)
 
 	_ = r.orm.Model(&dbModel.UserApplyJobs{}).Where("job_id = ? and user_id = ?", jobId, userId).
 		Select("is_collected, is_apply, is_talk").Scan(&res)
+
+	// 该职位用户和hr 的会话
+	// 多个会话 TODO
+	_ = r.orm.Model(&dbModel.SingleConversation{}).
+		Where("job_id = ? and user_id = ? and recruiter_id = ? and is_validate = ?",
+			jobId, userId, res.RecruiterUUID, true).Select("conversation_id").Scan(&res)
+
 	return res
 
 }
@@ -292,6 +303,9 @@ func (r *RecruiteDboperator) FindRecruiterInfo(id string) httpModel.HttpRecruite
 		res.Jobs = append(res.Jobs, item)
 	}
 
+	// leancloud 账号
+	_ = r.orm.Model(&dbModel.LeanCloudAccount{}).Where("uuid = ?", res.Recruiter.UserID).
+		Select("user_id as lean_cloud_account").Scan(&res.Recruiter)
 	return res
 
 }

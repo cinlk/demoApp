@@ -188,6 +188,7 @@ func (re *recruiteListHandle) findInternJob(w http.ResponseWriter, r *http.Reque
 
 	var id = param.ByName("id")
 	if id == "" {
+
 		re.ERROR(w, errors.New("empty job id"), http.StatusBadRequest)
 		return
 	}

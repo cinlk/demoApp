@@ -15,6 +15,8 @@ func CreateTables() {
 	// create recruite meeting content enum type
 	_ = orm.DB.Exec("CREATE TYPE contentType AS ENUM ('text', 'html')").Error
 
+	_ = orm.DB.Exec("CREATE TYPE role AS ENUM ('seeker', 'recruiter')").Error
+
 	// create table
 	//orm.DB.SetLogger(gLog.GetLogUtil())
 	err := orm.DB.AutoMigrate(&dbModel.AppGuidanceItem{}, &dbModel.NewsModel{}, &dbModel.Account{}, &dbModel.Recruiter{},
@@ -22,7 +24,8 @@ func CreateTables() {
 		&dbModel.Banners{}, &dbModel.LatestNews{}, &dbModel.JobCategory{}, &dbModel.TopJobs{},
 		&dbModel.CareerTalk{}, &dbModel.UserApplyCarrerTalk{}, &dbModel.Company{}, &dbModel.CompuseJobs{}, &dbModel.InternJobs{},
 		&dbModel.UserApplyJobs{}, &dbModel.ApplyClassify{}, &dbModel.TopWords{}, &dbModel.OnlineApply{},
-		&dbModel.UserOnlineApply{}, &dbModel.UserCompanyRelate{}).Error
+		&dbModel.UserOnlineApply{}, &dbModel.UserCompanyRelate{}, &dbModel.LeanCloudAccount{},
+		&dbModel.SingleConversation{}).Error
 
 	if err != nil {
 		gLog.LOG_PANIC(err)
@@ -30,12 +33,25 @@ func CreateTables() {
 
 	// create replationship
 
-	err = orm.DB.Model(&dbModel.User{}).AddForeignKey("phone", "account(phone)", "CASCADE", "CASCADE").Error
+	err = orm.DB.Model(&dbModel.User{}).AddForeignKey("uuid", "account(uuid)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
 
-	err = orm.DB.Model(&dbModel.SocialAccount{}).AddForeignKey("phone", "account(phone)", "CASCADE", "CASCADE").Error
+	err = orm.DB.Model(&dbModel.SocialAccount{}).AddForeignKey("uuid", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.Recruiter{}).AddForeignKey("uuid", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	//err = orm.DB.Model(&dbModel.Recruiter{}).AddForeignKey("company_id", "company(id)", "CASCADE", "CASCADE").Error
+	//if err != nil {
+	//	gLog.LOG_PANIC(err)
+	//}
+
+	err = orm.DB.Model(&dbModel.LeanCloudAccount{}).AddForeignKey("uuid", "account(uuid)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
@@ -67,10 +83,22 @@ func CreateTables() {
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
-	err = orm.DB.Model(&dbModel.Recruiter{}).AddForeignKey("company_id", "company(id)", "CASCADE", "CASCADE").Error
+
+	// leancloud
+	err = orm.DB.Model(&dbModel.SingleConversation{}).AddForeignKey("job_id", "compuse_jobs(id)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
+	err = orm.DB.Model(&dbModel.SingleConversation{}).AddForeignKey("user_id", "lean_cloud_account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.SingleConversation{}).AddForeignKey("recruiter_id", "lean_cloud_account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
 }
 
 func CloseDB() {

@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"demoApp/server/model/dbModel"
 	"demoApp/server/model/dbOperater"
+	"demoApp/server/utils"
 	"demoApp/server/utils/cache"
 	"demoApp/server/utils/errorStatus"
 	"demoApp/server/utils/sms"
@@ -53,7 +55,8 @@ type resetPassword struct {
 }
 
 type tokenRes = struct {
-	Token string `json:"token"`
+	Token       string `json:"token"`
+	LeanCloudId string `json:"lean_cloud_id"`
 }
 type codeRes = struct {
 	Code string `json:"code"`
@@ -64,6 +67,14 @@ type accountHandle struct {
 	validate  handlerValider
 	UrlPrefix string
 	db        *dbOperater.AccountDbOperator
+}
+
+type recruiterInfoReq struct {
+	Name      string `json:"name"`
+	Company   string `json:"company"`
+	CompanyId string `json:"company_id"`
+	UserIcon  string `json:"user_icon"`
+	Title     string `json:"title"`
 }
 
 type phoneFormater string
@@ -150,14 +161,15 @@ func (a *accountHandle) LoginWithPassword(w http.ResponseWriter, r *http.Request
 		a.ERROR(w, err, http.StatusBadRequest)
 	}
 
-	token, err := a.db.LoginByPwd(req.Phone, req.Password)
+	token, lid, err := a.db.LoginByPwd(req.Phone, req.Password)
 	if err != nil {
 		a.ERROR(w, err, http.StatusUnprocessableEntity)
 		return
 	}
 
 	a.JSON(w, tokenRes{
-		Token: token,
+		Token:       token,
+		LeanCloudId: lid,
 	}, http.StatusOK)
 
 }
@@ -175,7 +187,7 @@ func (a *accountHandle) LoginWithCode(w http.ResponseWriter, r *http.Request, _ 
 		return
 	}
 
-	token, err := a.db.LoginByCode(req.Phone, req.Code)
+	token, lid, err := a.db.LoginByCode(req.Phone, req.Code)
 	if err != nil {
 		a.ERROR(w, err, http.StatusUnprocessableEntity)
 		return
@@ -187,7 +199,8 @@ func (a *accountHandle) LoginWithCode(w http.ResponseWriter, r *http.Request, _ 
 	}
 
 	a.JSON(w, tokenRes{
-		Token: token,
+		Token:       token,
+		LeanCloudId: lid,
 	}, http.StatusAccepted)
 
 }
@@ -307,6 +320,58 @@ func (a *accountHandle) BindRelatedAccount(w http.ResponseWriter, r *http.Reques
 	a.JSON(w, tokenRes{
 		Token: token,
 	}, http.StatusAccepted)
+}
+
+// userinfo
+
+// 用户信息
+func (a *accountHandle) userInfo(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+	var userId = r.Header.Get(utils.USER_ID)
+	var role = r.Header.Get(utils.USER_ROLE)
+
+	res := a.db.GetUserInfo(role, userId)
+	switch t := res.(type) {
+	case error:
+		a.ERROR(w, t, http.StatusUnprocessableEntity)
+	case dbOperater.SeekerUser:
+		a.JSON(w, t, http.StatusOK)
+	case dbModel.Recruiter:
+		a.JSON(w, t, http.StatusOK)
+	}
+	//a.JSON(w, res, http.stat)
+
+}
+
+// recruiter
+
+func (a *accountHandle) RecuiterInfo(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
+
+	recruiterId := para.ByName("recruiterId")
+	if recruiterId == "" {
+		a.ERROR(w, errors.New("empty recruiter"), http.StatusBadRequest)
+		return
+	}
+
+	var req recruiterInfoReq
+	err := a.validate.Validate(r, &req)
+	if err != nil {
+		a.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	orm := a.db.Dborm()
+
+	// 更新用户信息
+	err = orm.Model(&dbModel.Recruiter{}).Where("uuid = ?", recruiterId).
+		Update(*utils.Struct2Map(req)).Error
+	if err != nil {
+		a.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+
 }
 
 //  function tools

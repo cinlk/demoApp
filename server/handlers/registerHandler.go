@@ -191,6 +191,15 @@ func RegisterRouter(router *httprouter.Router) {
 		},
 	}
 
+	// message
+	var messageHandler = messageHandler{
+		urlPrefix:  "/message",
+		dbOperator: dbOperater.NewMessageDbOperater(),
+		validate: &jsonValidate{
+			requiredTag: "binding",
+		},
+	}
+
 	var testh = TestHandler{
 		UrlPrefix: "/test",
 	}
@@ -223,6 +232,8 @@ func RegisterRouter(router *httprouter.Router) {
 		account.POST("/login/code", accoutHandler.LoginWithCode)
 		account.POST("/login/social", accoutHandler.LoginWithRelatedAccount)
 		account.POST("/registry/social", accoutHandler.BindRelatedAccount)
+		account.POST("/recruite/info/:recruiterId", accoutHandler.RecuiterInfo)
+		account.GET("/userinfo", accoutHandler.userInfo, middleware.AuthorizationVerify)
 
 	}
 
@@ -259,7 +270,7 @@ func RegisterRouter(router *httprouter.Router) {
 
 	}
 
-	recruit := rg.NewGroupRouter(recruitHandler.UrlPrefix, router)
+	recruit := rg.NewGroupRouter(recruitHandler.UrlPrefix, router, middleware.AuthorizationVerify)
 	{
 		recruit.POST("/online", recruitHandler.onlineApplys)
 		recruit.POST("/carreerTalk", recruitHandler.careerTalks)
@@ -275,6 +286,13 @@ func RegisterRouter(router *httprouter.Router) {
 		recruit.POST("/tag/jobs", recruitHandler.companyTagJobs)
 		recruit.POST("/company/recruit/meeting", recruitHandler.companyRecruitMeeting)
 
+	}
+
+	message := rg.NewGroupRouter(messageHandler.urlPrefix, router, middleware.AuthorizationVerify)
+	{
+		message.POST("/conversation", messageHandler.conversation)
+		message.GET("/conversation/:userId/:jobId", messageHandler.conversation)
+		message.GET("/talkWith/:userId", messageHandler.recruiterInfo)
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)

@@ -33,6 +33,9 @@ type HttpGraduateModel struct {
 	Salary       string  `json:"salary"`
 	Education    string  `json:"education"`
 	ApplyEndTime tString `json:"apply_end_time,omitempty"`
+
+	// 会话号
+	ConversationId string `json:"conversation_id,omitempty"`
 }
 
 type HttpInternJobModel struct {

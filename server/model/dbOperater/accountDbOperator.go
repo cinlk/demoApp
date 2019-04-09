@@ -15,7 +15,21 @@ import (
 const (
 	DEFAULT_ROLE    = "seeker"
 	ANONYMOUSE_ROLE = "anonymous"
+	RECRUITER       = "recruiter"
 )
+
+type SeekerUser struct {
+	Name     string `json:"name"`
+	UserIcon string `json:"user_icon"`
+	UserId   string `json:"user_id"`
+	Role     string `json:"role"`
+}
+
+type RecruiterUser struct {
+	SeekerUser
+	Company string `json:"company"`
+	Title   string `json:"title"`
+}
 
 type AccountDbOperator struct {
 	orm   *gorm.DB
@@ -39,60 +53,80 @@ func (a *AccountDbOperator) LoginAnonymous() (string, error) {
 	return a.claim.CreateDefaultToken("", ANONYMOUSE_ROLE)
 }
 
-func (a *AccountDbOperator) LoginByPwd(phone, password string) (token string, err error) {
+func (a *AccountDbOperator) LoginByPwd(phone, password string) (token, lid string, err error) {
 
 	account, err := dbModel.FindAccount(a.orm, phone)
 	if err != nil {
-		return "", &errorStatus.AppError{
+		return "", "", &errorStatus.AppError{
 			Code: http.StatusNotFound,
 			Err:  errors.Wrap(err, "not found account"),
 		}
 	}
 
 	if utils.CompareHashPassword(account.Password, password) == false {
-		return "", &errorStatus.AppError{
+		return "", "", &errorStatus.AppError{
 			Code: http.StatusForbidden,
 			Err:  errors.New("password not match"),
 		}
 	}
 	uuid, i := account.FindAssociateUserByColume(a.orm, "Uuid")
 	if uuid == "" {
-		return "", &errorStatus.AppError{
+		return "", "", &errorStatus.AppError{
 			Code: http.StatusNotFound,
 			Err:  errors.New("not found user with account"),
 		}
 	}
+	// 查找关联的leancloud账号 TODO
+
+	// 查找leancloud-user id
+	var lc struct {
+		UserId string `json:"user_id"`
+	}
+	err = a.orm.Model(&dbModel.LeanCloudAccount{}).Where("uuid = ?", uuid).
+		Select("user_id").Scan(&lc).Error
+
 	a.resetLoginState(i, uuid)
 
-	return a.claim.CreateDefaultToken(uuid, account.Role)
+	token, err = a.claim.CreateDefaultToken(uuid, account.Role)
+
+	return token, lc.UserId, err
 
 }
 
-func (a *AccountDbOperator) LoginByCode(phone, code string) (token string, err error) {
+func (a *AccountDbOperator) LoginByCode(phone, code string) (token, lid string, err error) {
 
 	// 从数据库查找该用户，有返回该用户数据
 	account, err := dbModel.FindAccount(a.orm, phone)
 
 	if err == gorm.ErrRecordNotFound {
 		// 创建新用户 密码随机
-		uuid, err := dbModel.CreateNewAccount(a.orm, phone, "")
+		uuid, lid, err := dbModel.CreateNewAccount(a.orm, phone, "")
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 
-		return a.claim.CreateDefaultToken(uuid, DEFAULT_ROLE)
+		token, err = a.claim.CreateDefaultToken(uuid, DEFAULT_ROLE)
+		return token, lid, err
 
 	} else if err == nil {
 		uuid, i := account.FindAssociateUserByColume(a.orm, "Uuid")
 		if uuid == "" {
-			return "", errors.New("not found associate user")
+			return "", "", errors.New("not found associate user")
 		}
 		a.resetLoginState(i, uuid)
 
-		return a.claim.CreateDefaultToken(uuid, account.Role)
+		token, err = a.claim.CreateDefaultToken(uuid, account.Role)
+		// 查找leancloud-user id
+		var lid struct {
+			UserId string `json:"user_id"`
+		}
+		err = a.orm.Model(&dbModel.LeanCloudAccount{}).Where("uuid = ?", uuid).
+			Select("user_id").Scan(&lid).Error
+
+		return token, lid.UserId, err
 
 	} else {
-		return "", err
+		return "", "", err
 	}
 
 }
@@ -107,7 +141,8 @@ func (a *AccountDbOperator) RegistryAccount(phone, password string) (token strin
 		}
 	}
 	if err == gorm.ErrRecordNotFound {
-		uuid, err := dbModel.CreateNewAccount(a.orm, phone, password)
+		// TODO
+		uuid, _, err := dbModel.CreateNewAccount(a.orm, phone, password)
 		if err != nil {
 			return "", err
 		}
@@ -207,7 +242,7 @@ func (a *AccountDbOperator) BindRelatedAccount(phone, relatedID, Type string) (t
 		}
 
 		err = a.orm.Model(account).Association("RelatedAccount").Append(&dbModel.SocialAccount{
-			Phone:     phone,
+			Uuid:      account.Uuid,
 			RelatedID: relatedID,
 			Type:      t,
 		}).Error
@@ -253,6 +288,48 @@ func (a *AccountDbOperator) SetLogOut(role, uuid string) {
 	}
 
 }
+
+func (a *AccountDbOperator) GetUserInfo(role, userId string) interface{} {
+
+	switch role {
+	case ANONYMOUSE_ROLE:
+		var seeker SeekerUser
+		seeker.Role = role
+		return seeker
+	case DEFAULT_ROLE:
+		var seeker SeekerUser
+		err := a.orm.Model(&dbModel.User{}).Where("uuid = ?", userId).
+			Select("uuid as user_id, name, user_icon").
+			Scan(&seeker).Error
+		if err != nil {
+			return err
+		}
+		seeker.Role = role
+		return seeker
+	case RECRUITER:
+		var recruiter RecruiterUser
+		err := a.orm.Model(&dbModel.Recruiter{}).Where("uuid = ?", userId).
+			Select("uuid as user_id, name, user_icon, company, title").
+			Scan(&recruiter).Error
+		if err != nil {
+			return err
+		}
+		recruiter.Role = role
+		return recruiter
+	}
+
+	return errors.New("invalidate role")
+
+}
+
+func (a *AccountDbOperator) Dborm() *gorm.DB {
+	return a.orm
+}
+
+// recruiter
+//func (a *AccountDbOperator) UpdateRecruiteInfo(){
+//
+//}
 
 func NewAccountDbOperator() *AccountDbOperator {
 
