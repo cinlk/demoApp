@@ -6,6 +6,10 @@ const (
 	SALT              = "%^$&dwqd#GR%$e2e2e$#@-321431CDFWEFewfewf"
 	TIME_YEAR_DAY     = "2006-01-02"
 	BASETIME_FORMAT   = "2006-01-02 15:04:05"
-	USER_ID 		  = "uid"
-	USER_ROLE 		  = "role"
+	USER_ID           = "uid"
+	USER_ROLE         = "role"
+
+	DEFAULT_ROLE    = "seeker"
+	ANONYMOUSE_ROLE = "anonymous"
+	RECRUITER       = "recruiter"
 )

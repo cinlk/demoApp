@@ -27,12 +27,16 @@ func AuthorizationVerify(handle httprouter.Handle) httprouter.Handle {
 
 		if claim, ok := token.Claims.(*jwt_auth.UserClaim); ok {
 			// 缓存判断该token
-			b, err := cache.GetKeyFromCache(claim.Uuid)
+			// 区分anonymouse
+			if claim.Role != utils.ANONYMOUSE_ROLE {
+				b, err := cache.GetKeyFromCache(claim.Uuid)
 
-			if err != nil || string(b) != token.Raw {
-				gLog.LOG_INFO(fmt.Sprintf("can't found token  %s in cache ", string(b)))
-				goto last
+				if err != nil || string(b) != token.Raw {
+					gLog.LOG_INFO(fmt.Sprintf("can't found token  %s in cache ", string(b)))
+					goto last
+				}
 			}
+
 			// 判断角色
 			fmt.Println(claim.Role, r.URL.String())
 			if config.PolicyEnforce.Enforce(claim.Role, r.URL.String(), r.Method) == false {

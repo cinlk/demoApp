@@ -2,6 +2,7 @@ package dbOperater
 
 import (
 	"demoApp/server/model/dbModel"
+	utils2 "demoApp/server/utils"
 	"demoApp/server/utils/errorStatus"
 	"demoApp/server/utils/jwt_auth"
 	"github.com/jinzhu/gorm"
@@ -10,12 +11,6 @@ import (
 	"goframework/utils"
 	"net/http"
 	"time"
-)
-
-const (
-	DEFAULT_ROLE    = "seeker"
-	ANONYMOUSE_ROLE = "anonymous"
-	RECRUITER       = "recruiter"
 )
 
 type SeekerUser struct {
@@ -50,7 +45,7 @@ func (a *AccountDbOperator) ExistAccount(phone string) error {
 
 func (a *AccountDbOperator) LoginAnonymous() (string, error) {
 
-	return a.claim.CreateDefaultToken("", ANONYMOUSE_ROLE)
+	return a.claim.CreateDefaultToken("", utils2.ANONYMOUSE_ROLE)
 }
 
 func (a *AccountDbOperator) LoginByPwd(phone, password string) (token, lid string, err error) {
@@ -105,7 +100,7 @@ func (a *AccountDbOperator) LoginByCode(phone, code string) (token, lid string, 
 			return "", "", err
 		}
 
-		token, err = a.claim.CreateDefaultToken(uuid, DEFAULT_ROLE)
+		token, err = a.claim.CreateDefaultToken(uuid, utils2.DEFAULT_ROLE)
 		return token, lid, err
 
 	} else if err == nil {
@@ -147,7 +142,7 @@ func (a *AccountDbOperator) RegistryAccount(phone, password string) (token strin
 			return "", err
 		}
 		// 生成token
-		return a.claim.CreateDefaultToken(uuid, DEFAULT_ROLE)
+		return a.claim.CreateDefaultToken(uuid, utils2.DEFAULT_ROLE)
 
 	}
 
@@ -292,11 +287,11 @@ func (a *AccountDbOperator) SetLogOut(role, uuid string) {
 func (a *AccountDbOperator) GetUserInfo(role, userId string) interface{} {
 
 	switch role {
-	case ANONYMOUSE_ROLE:
+	case utils2.ANONYMOUSE_ROLE:
 		var seeker SeekerUser
 		seeker.Role = role
 		return seeker
-	case DEFAULT_ROLE:
+	case utils2.DEFAULT_ROLE:
 		var seeker SeekerUser
 		err := a.orm.Model(&dbModel.User{}).Where("uuid = ?", userId).
 			Select("uuid as user_id, name, user_icon").
@@ -306,7 +301,7 @@ func (a *AccountDbOperator) GetUserInfo(role, userId string) interface{} {
 		}
 		seeker.Role = role
 		return seeker
-	case RECRUITER:
+	case utils2.RECRUITER:
 		var recruiter RecruiterUser
 		err := a.orm.Model(&dbModel.Recruiter{}).Where("uuid = ?", userId).
 			Select("uuid as user_id, name, user_icon, company, title").

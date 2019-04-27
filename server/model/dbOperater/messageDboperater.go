@@ -16,7 +16,7 @@ func (m *MessageDbOperater) CreateConversation(userId, recruiterId, jobId, conId
 
 	session := orm.DB.Begin()
 
-	err := session.Create(&dbModel.SingleConversation{
+	err := session.Set("gorm:insert_option", "ON CONFLICT(conversation_id) do nothing").Create(&dbModel.SingleConversation{
 		UserID:         userId,
 		RecruiterID:    recruiterId,
 		JobID:          jobId,
