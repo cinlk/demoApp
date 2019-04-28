@@ -234,6 +234,8 @@ func RegisterRouter(router *httprouter.Router) {
 		account.POST("/registry/social", accoutHandler.BindRelatedAccount)
 		account.POST("/recruite/info/:recruiterId", accoutHandler.RecuiterInfo)
 		account.GET("/userinfo", accoutHandler.userInfo, middleware.AuthorizationVerify)
+		//account.GET("/visitor/:userId", accoutHandler.CheckVisitor, middleware.AuthorizationVerify)
+		//account.POST("/visitor/:userId", accoutHandler.CheckVisitor, middleware.AuthorizationVerify)
 
 	}
 
@@ -293,6 +295,10 @@ func RegisterRouter(router *httprouter.Router) {
 		message.POST("/conversation", messageHandler.conversation)
 		message.GET("/conversation/:userId/:jobId", messageHandler.conversation)
 		message.GET("/talkWith/:userId", messageHandler.recruiterInfo)
+		message.POST("/visitors", messageHandler.myVisitor)
+		message.PUT("/visitor/status", messageHandler.visitorChecked)
+		message.POST("/visitorTime/:userId", messageHandler.checkVisitorTime)
+		message.GET("/newVisitor/:userId", messageHandler.CheckNewVisitor)
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)

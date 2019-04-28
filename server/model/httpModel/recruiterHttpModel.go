@@ -5,15 +5,15 @@ import "github.com/lib/pq"
 // 发布者
 type HttpRecruiterModel struct {
 	// 系统自带的id
-	UserID     string  `json:"user_id"`
+	UserID string `json:"user_id"`
 	// leancloud 账号id
-	LeanCloudAccount string `json:"lean_cloud_account"`
-	Name       string  `json:"name"`
-	UserIcon   string  `json:"user_icon"`
-	Title      string  `json:"title"`
-	OnlineTime tString `json:"online_time"`
-	Company    string  `json:"company"`
-	CompanyID  string  `json:"-"`
+	LeanCloudAccount string  `json:"lean_cloud_account"`
+	Name             string  `json:"name"`
+	UserIcon         string  `json:"user_icon"`
+	Title            string  `json:"title"`
+	OnlineTime       tString `json:"online_time"`
+	Company          string  `json:"company"`
+	CompanyID        string  `json:"-"`
 }
 
 type HttpRecruiterJobsModel struct {
@@ -29,4 +29,15 @@ type HttpRecruiterMainModel struct {
 	Recruiter HttpRecruiterModel       `json:"recruiter"`
 	Company   HttpSimpleCompanyModel   `json:"company"`
 	Jobs      []HttpRecruiterJobsModel `json:"jobs,omitempty"`
+}
+
+type HttpRecruiterVisitorModel struct {
+	RecruiterId string  `json:"recruiter_id"`
+	Name        string  `json:"name"`
+	VisitTime   tString `json:"visit_time"`
+	// 用户是否点击查看该hr
+	Checked  bool   `json:"checked"`
+	Company  string `json:"company"`
+	UserIcon string `json:"user_icon"`
+	Title    string `json:"title"`
 }

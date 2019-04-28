@@ -150,7 +150,6 @@ func createNews() {
 func createRecruiter() {
 	var before = time.Now().Add(-time.Hour)
 	var r = dbModel.Recruiter{
-		Phone:     "13718754627",
 		Uuid:      "12345",
 		Name:      "我是小王",
 		CompanyId: "公司1",
@@ -220,6 +219,13 @@ func testRecruitRelated() {
 	fmt.Println(len(rec1.CompusJobs), len(rec1.InternJobs))
 }
 
+func testVisitor() {
+	testDB.Create(&dbModel.RecruiterVisitorUser{
+		RecruiterId: "67f0c4ad-4888-11e9-b162-a0999b089907",
+		UserId:      "24b12069-4853-11e9-a446-a0999b089907",
+	})
+}
+
 //print(recruiters)
 
 func main() {
@@ -231,5 +237,6 @@ func main() {
 	//createOnlineApplys()
 	//createInternJobs()
 	//relatedQuery()
-	testRecruitRelated()
+	//testRecruitRelated()
+	testVisitor()
 }

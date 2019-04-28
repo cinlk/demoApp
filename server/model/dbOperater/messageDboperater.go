@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"goframework/orm"
+	"time"
 )
 
 type MessageDbOperater struct {
@@ -73,6 +74,62 @@ func (m *MessageDbOperater) RecruiterInfo(userId string) (*httpModel.HttpRecruit
 		Select("user_id as lean_cloud_account").Scan(&res).Error
 
 	return &res, nil
+}
+
+func (m *MessageDbOperater) MyVisitors(userId string, offset, limit int) ([]httpModel.HttpRecruiterVisitorModel, error) {
+
+	var res []httpModel.HttpRecruiterVisitorModel
+
+	// 找到关注我的recruiter 的信息
+	err := m.orm.Model(&dbModel.RecruiterVisitorUser{}).
+		Joins("left join recruiter on recruiter.uuid =  recruiter_visitor_user.recruiter_id").
+		Where("recruiter_visitor_user.user_id = ?", userId).
+		Select("recruiter.uuid as recruiter_id, recruiter.name, " +
+			"recruiter_visitor_user.created_at as visit_time, recruiter_visitor_user.checked, " +
+			"recruiter.company, recruiter.title, recruiter.user_icon").
+		Offset(offset).
+		Limit(limit).Order("recruiter_visitor_user.created_at desc").
+		Scan(&res).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (m *MessageDbOperater) CheckVisitor(userId, recruiterId string) {
+
+	// 更新 已经查看了recruiter的访问
+	_ = m.orm.Model(&dbModel.RecruiterVisitorUser{}).Where("user_id = ? and recruiter_id = ?",
+		userId, recruiterId).Update("checked", true)
+}
+
+func (m *MessageDbOperater) ExistNewVisitor(userId string) bool {
+
+	// 最新的访问者时间 和 check_visitor_time 比较
+	var model dbModel.RecruiterVisitorUser
+	err := m.orm.Model(&dbModel.RecruiterVisitorUser{}).Where("user_id = ?", userId).Last(&model).Error
+	// 可能还没数据
+	if err != nil {
+		return false
+	}
+	var user dbModel.User
+	err = m.orm.Model(&dbModel.User{}).Where("uuid = ?", userId).First(&user).Error
+	if err != nil {
+		return false
+	}
+	if user.CheckVisitorTime == nil {
+		return true
+	}
+	return model.CreatedAt.After(*user.CheckVisitorTime)
+
+}
+
+func (m *MessageDbOperater) UpdateTimeVisitor(userId string) {
+
+	_ = m.orm.Model(&dbModel.User{}).Where("uuid = ?", userId).
+		Update("check_visitor_time", time.Now()).Error
+
 }
 
 func NewMessageDbOperater() *MessageDbOperater {

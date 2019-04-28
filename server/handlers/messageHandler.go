@@ -6,6 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"net/http"
+	"strings"
 )
 
 type newConversationReq struct {
@@ -15,6 +16,17 @@ type newConversationReq struct {
 	JobId       string `json:"job_id" binding:"required"`
 }
 
+type visitorHistoryReq struct {
+	UserId string `json:"user_id" binding:"required"`
+	Offset int    `json:"offset"`
+	Limit  int    `json:"limit"`
+}
+
+type visitorStatusReq struct {
+	UserId      string `json:"user_id" binding:"required"`
+	RecruiterId string `json:"recruiter_id" binding:"required"`
+}
+
 type messageHandler struct {
 	baseHandler
 	urlPrefix  string
@@ -22,16 +34,60 @@ type messageHandler struct {
 	dbOperator *dbOperater.MessageDbOperater
 }
 
-// who is the recuiter  has pay attension to me
-func (m *messageHandler) attentionsToMe(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+// 获取看过我的hr 记录
+func (m *messageHandler) myVisitor(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var req visitorHistoryReq
+	err := m.validate.Validate(r, &req)
+	if err != nil {
+		m.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	res, err := m.dbOperator.MyVisitors(req.UserId, req.Offset, req.Limit)
+	if err != nil {
+		m.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	m.JSON(w, res, http.StatusOK)
 
 }
 
-func (m *messageHandler) checkAttentions(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
-
+// 更新已经访问者的 查看状态
+func (m *messageHandler) visitorChecked(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
+	var req visitorStatusReq
+	err := m.validate.Validate(r, &req)
+	if err != nil {
+		m.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	m.dbOperator.CheckVisitor(req.UserId, req.RecruiterId)
+	w.WriteHeader(http.StatusAccepted)
 }
 
 //
+// 访问者
+func (m *messageHandler) checkVisitorTime(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
+	var userId = para.ByName("userId")
+	if strings.TrimSpace(userId) == "" {
+		m.ERROR(w, errors.New("empty userid"), http.StatusBadRequest)
+		return
+	}
+	m.dbOperator.UpdateTimeVisitor(userId)
+	w.WriteHeader(http.StatusAccepted)
+}
+
+// 访问者
+func (m *messageHandler) CheckNewVisitor(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
+	var userId = para.ByName("userId")
+	if strings.TrimSpace(userId) == "" {
+		m.ERROR(w, errors.New("empty userid"), http.StatusBadRequest)
+		return
+	}
+	// 检查是否有最新的访问者
+	exist := m.dbOperator.ExistNewVisitor(userId)
+	m.JSON(w, map[string]interface{}{"exist": exist}, http.StatusOK)
+}
 
 func (m *messageHandler) recruiterInfo(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
 	userId := para.ByName("userId")

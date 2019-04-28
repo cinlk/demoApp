@@ -20,7 +20,7 @@ func CreateTables() {
 	// create table
 	//orm.DB.SetLogger(gLog.GetLogUtil())
 	err := orm.DB.AutoMigrate(&dbModel.AppGuidanceItem{}, &dbModel.NewsModel{}, &dbModel.Account{}, &dbModel.Recruiter{},
-		&dbModel.User{}, &dbModel.SocialAccount{},
+		&dbModel.User{}, &dbModel.SocialAccount{}, &dbModel.RecruiterVisitorUser{},
 		&dbModel.Banners{}, &dbModel.LatestNews{}, &dbModel.JobCategory{}, &dbModel.TopJobs{},
 		&dbModel.CareerTalk{}, &dbModel.UserApplyCarrerTalk{}, &dbModel.Company{}, &dbModel.CompuseJobs{}, &dbModel.InternJobs{},
 		&dbModel.UserApplyJobs{}, &dbModel.ApplyClassify{}, &dbModel.TopWords{}, &dbModel.OnlineApply{},
@@ -43,6 +43,15 @@ func CreateTables() {
 		gLog.LOG_PANIC(err)
 	}
 	err = orm.DB.Model(&dbModel.Recruiter{}).AddForeignKey("uuid", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.RecruiterVisitorUser{}).AddForeignKey("user_id", "\"user\"(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.RecruiterVisitorUser{}).AddForeignKey("recruiter_id", "recruiter(uuid)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}

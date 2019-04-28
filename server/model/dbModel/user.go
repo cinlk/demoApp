@@ -82,6 +82,9 @@ type User struct {
 	//Account    Account   `gorm:"ForeignKey:Phone;AssociationForeignKey:Phone"`
 	UserIcon string `json:"user_icon"`
 	//CarrerTalks []UserCarrerTalk `gorm:"ForeignKey:UserId;AssociationForeignKey:UserId" json:"carrer_talks"`
+	CheckVisitorTime *time.Time `json:"check_visitor_time"`
+	// 关联的我的访问者
+	MyVisitors []RecruiterVisitorUser `gorm:"ForeignKey:UserId,AssociationForeignKey:UserId" json:"my_visitors"`
 }
 
 type Recruiter struct {
@@ -100,6 +103,13 @@ type Recruiter struct {
 	//Account    Account      `gorm:"ForeignKey:Phone"`
 	CompusJobs []CompuseJobs `gorm:"ForeignKey:RecruiterUUID" json:"compus_jobs,omitempty"`
 	InternJobs []InternJobs  `gorm:"ForeignKey:RecruiterUUID" json:"intern_jobs,omitempty"`
+}
+
+type RecruiterVisitorUser struct {
+	gorm.Model  `json:"-"`
+	RecruiterId string
+	UserId      string
+	Checked     bool `gorm:"default:false" json:"checked"`
 }
 
 func (a *Account) FindAssociateUserByColume(orm *gorm.DB, name string) (uuid string, t interface{}) {
