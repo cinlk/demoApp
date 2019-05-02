@@ -226,6 +226,22 @@ func testVisitor() {
 	})
 }
 
+func testSystemMessage() {
+	var t = time.Now()
+	//err := testDB.up(&dbModel.ForumReplyMyTime{
+	//	LatestReplyTime: &t,
+	//	UserId:          "24b12069-4853-11e9-a446-a0999b089907",
+	//}).Error
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	var mode dbModel.ForumReplyMyTime
+	testDB.Model(&dbModel.ForumThumbUpTime{}).Where("user_id = ?", "24b12069-4853-11e9-a446-a0999b089907").First(&mode)
+	testDB.Model(&mode).Update("latest_reply_time", &t)
+	fmt.Println(mode.CheckTime == nil, mode.LatestReplyTime)
+
+}
+
 //print(recruiters)
 
 func main() {
@@ -238,5 +254,7 @@ func main() {
 	//createInternJobs()
 	//relatedQuery()
 	//testRecruitRelated()
-	testVisitor()
+	//testVisitor()
+	//testLeanCloud()
+	testSystemMessage()
 }

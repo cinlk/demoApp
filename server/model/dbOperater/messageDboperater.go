@@ -3,6 +3,9 @@ package dbOperater
 import (
 	"demoApp/server/model/dbModel"
 	"demoApp/server/model/httpModel"
+	"demoApp/server/utils"
+	"demoApp/server/utils/leancloud"
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"goframework/orm"
@@ -130,6 +133,162 @@ func (m *MessageDbOperater) UpdateTimeVisitor(userId string) {
 	_ = m.orm.Model(&dbModel.User{}).Where("uuid = ?", userId).
 		Update("check_visitor_time", time.Now()).Error
 
+}
+
+func (m *MessageDbOperater) HasNewSystemMessage(userId string) bool {
+	// 检查消息表 和 用户查看系统消息表
+	// 对比时间
+
+	// 最后一条系统消息记录
+	var last dbModel.SystemMessage
+	err := m.orm.Model(&dbModel.SystemMessage{}).Last(&last).Error
+	if err != nil {
+		return false
+	}
+
+	var check dbModel.UserCheckSystemMessage
+	err = m.orm.Model(&dbModel.UserCheckSystemMessage{}).Where("user_id = ?", userId).First(&check).Error
+	// 可能还没数据
+
+	if err == gorm.ErrRecordNotFound {
+		return true
+	}
+	if err != nil {
+		return false
+	}
+
+	return last.CreatedAt.After(*check.CheckTime)
+
+}
+
+func (m *MessageDbOperater) ReviewSystemMessage(userId string) error {
+
+	var model dbModel.UserCheckSystemMessage
+	var t = time.Now()
+	return m.orm.Where(dbModel.UserCheckSystemMessage{
+		UserId: userId,
+	}).Assign(dbModel.UserCheckSystemMessage{
+		CheckTime: &t,
+	}).FirstOrCreate(&model).Error
+
+}
+
+// 检查是否存在新的点赞消息
+func (m *MessageDbOperater) HasNewThumbUpMessage(userId string) bool {
+	var model dbModel.ForumThumbUpTime
+	err := m.orm.Model(&dbModel.ForumThumbUpTime{}).Where("user_id = ?", userId).First(&model).Error
+	if err != nil {
+		return false
+	}
+
+	if model.CheckTime == nil && model.LatestThumbTime != nil {
+		return true
+	}
+	if model.CheckTime != nil && model.LatestThumbTime != nil {
+		return model.LatestThumbTime.After(*model.CheckTime)
+	}
+
+	return false
+}
+
+func (m *MessageDbOperater) ReviewThumbUpMessage(userId string) error {
+	// 只能更新
+	var t = time.Now()
+	return m.orm.Model(&dbModel.ForumThumbUpTime{}).Where("user_id = ?", userId).
+		Update("check_time", &t).Error
+
+}
+
+// 论坛回复我的最新 消息提醒
+func (m *MessageDbOperater) HasNewForumReply2Me(userId string) bool {
+
+	var model dbModel.ForumReplyMyTime
+	err := m.orm.Model(&dbModel.ForumReplyMyTime{}).Where("user_id = ?", userId).First(&model).Error
+	if err != nil {
+		return false
+	}
+	fmt.Println(model)
+
+	if model.CheckTime == nil && model.LatestReplyTime != nil {
+		return true
+	}
+	if model.CheckTime != nil && model.LatestReplyTime != nil {
+		return model.LatestReplyTime.After(*model.CheckTime)
+	}
+
+	return false
+}
+
+func (m *MessageDbOperater) ReviewForumReply2Me(userId string) error {
+
+	// 只能更新
+	var t = time.Now()
+	return m.orm.Model(&dbModel.ForumReplyMyTime{}).Where("user_id = ?", userId).
+		Update("check_time", &t).Error
+}
+
+func (m *MessageDbOperater) SystemMessage(message string) error {
+
+	session := m.orm.Begin()
+	var notifiyId = utils.RandStrings(16)
+
+	// 加入到系统消息表
+	err := session.Create(&dbModel.SystemMessage{
+		Content: message,
+		Title:   "[系统]",
+	}).Error
+	if err != nil {
+		session.Rollback()
+		return err
+	}
+
+	// 加入到通知表
+	err = session.Create(&dbModel.NotifyMessage{
+		Content:        message,
+		NotificationId: notifiyId,
+		Type:           dbModel.System,
+		Title:          "系统通知",
+		Channels:       []string{"systemNotify"},
+	}).Error
+	if err != nil {
+		session.Rollback()
+		return err
+
+	}
+	// 发送推送（订阅系统消息设备接受推送）
+	err = leancloud.LeanCloudSendSystemNotify("systemNotify", "系统通知", notifiyId, message)
+	if err != nil {
+		session.Rollback()
+		return err
+	}
+	session.Commit()
+	return nil
+}
+
+func (m *MessageDbOperater) SpecialUserNotify(leanCloudUserId, message string) error {
+	session := m.orm.Begin()
+	var notifyId = utils.RandStrings(16)
+
+	err := session.Create(&dbModel.NotifyMessage{
+		Content:        message,
+		NotificationId: notifyId,
+		Type:           dbModel.Special,
+		Title:          "新消息",
+		Channels:       []string{leanCloudUserId},
+	}).Error
+	if err != nil {
+		session.Rollback()
+		return err
+	}
+
+	err = leancloud.LeanCloudSendUserNotify(leanCloudUserId, "新消息", notifyId, message)
+	if err != nil {
+		session.Rollback()
+		return err
+	}
+
+	session.Commit()
+	return nil
 }
 
 func NewMessageDbOperater() *MessageDbOperater {

@@ -27,6 +27,11 @@ type visitorStatusReq struct {
 	RecruiterId string `json:"recruiter_id" binding:"required"`
 }
 
+type NotifyContentReq struct {
+	Content string `json:"content" binding:"required"`
+	UserId  string `json:"user_id,omitempty"`
+}
+
 type messageHandler struct {
 	baseHandler
 	urlPrefix  string
@@ -145,5 +150,152 @@ func (m *messageHandler) conversation(w http.ResponseWriter, r *http.Request, pa
 
 		m.JSON(w, map[string]string{"conversation_id": id}, http.StatusOK)
 	}
+
+}
+
+// 最新的系统消息
+func (m *messageHandler) HasNewSystemMessage(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
+	var userId = para.ByName("userId")
+	if strings.TrimSpace(userId) == "" {
+		http.Error(w, errors.New("empty userid").Error(), http.StatusBadRequest)
+		return
+	}
+	exist := m.dbOperator.HasNewSystemMessage(userId)
+
+	m.JSON(w, map[string]interface{}{
+		"exist": exist,
+	}, http.StatusOK)
+
+}
+
+func (m *messageHandler) ReviewSystemMessage(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
+
+	var userId = para.ByName("userId")
+	if strings.TrimSpace(userId) == "" {
+		http.Error(w, errors.New("empty userid").Error(), http.StatusBadRequest)
+		return
+	}
+	// 更新检查时间
+	err := m.dbOperator.ReviewSystemMessage(userId)
+	if err != nil {
+		m.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+
+}
+
+// 点赞消息
+func (m *messageHandler) HasThumbUpMessage(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
+
+	var userId = para.ByName("userId")
+	if strings.TrimSpace(userId) == "" {
+		http.Error(w, errors.New("empty userid").Error(), http.StatusBadRequest)
+		return
+	}
+
+	exist := m.dbOperator.HasNewThumbUpMessage(userId)
+
+	m.JSON(w, map[string]interface{}{
+		"exist": exist,
+	}, http.StatusOK)
+
+}
+
+// 预览点赞消息
+func (m *messageHandler) ReviewThumbUpMessage(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
+
+	var userId = para.ByName("userId")
+	if strings.TrimSpace(userId) == "" {
+		http.Error(w, errors.New("empty userid").Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := m.dbOperator.ReviewThumbUpMessage(userId)
+	if err != nil {
+		m.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
+
+}
+
+// 论坛回复我的 最新记录
+func (m *messageHandler) NewForumReply2Me(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
+
+	var userId = para.ByName("userId")
+	if strings.TrimSpace(userId) == "" {
+		http.Error(w, errors.New("empty userid").Error(), http.StatusBadRequest)
+		return
+	}
+
+	exist := m.dbOperator.HasNewForumReply2Me(userId)
+
+	m.JSON(w, map[string]interface{}{
+		"exist": exist,
+	}, http.StatusOK)
+
+}
+
+func (m *messageHandler) ReviewForumReply2Me(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
+
+	var userId = para.ByName("userId")
+	if strings.TrimSpace(userId) == "" {
+		http.Error(w, errors.New("empty userid").Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := m.dbOperator.ReviewForumReply2Me(userId)
+	if err != nil {
+		m.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
+}
+
+// 管理员调用该接口产生系统通知消息（管理系统 TODO）
+func (m *messageHandler) systemNotifyMessage(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+	var req NotifyContentReq
+	err := m.validate.Validate(r, &req)
+	if err != nil {
+		m.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// 产生什么类型的系统消息(测试 文本数据)
+	var notifyContent = req.Content
+
+	// 存入数据库 并推送消息
+	err = m.dbOperator.SystemMessage(notifyContent)
+	if err != nil {
+		m.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+
+}
+
+// 发送指定推送通知
+func (m *messageHandler) SpecialNotifyMessage(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+	var req NotifyContentReq
+	err := m.validate.Validate(r, &req)
+	if err != nil {
+		m.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	//系统的uuid ---> leancloud userid  ---> 查询最新的installation id
+	// 用户可以有多个设备
+	//var leanCloudUserId = "5c8da148ba39c8007006ac44"
+	err = m.dbOperator.SpecialUserNotify(req.UserId, req.Content)
+	if err != nil {
+		m.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
 
 }

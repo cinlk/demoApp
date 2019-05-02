@@ -218,6 +218,10 @@ func RegisterRouter(router *httprouter.Router) {
 		//global.GET("/near/meetings", )
 		global.GET("/jobs/warns", apphandler.jobWarns)
 
+		// 测试通知推送
+		global.PUT("/systemNotify", messageHandler.systemNotifyMessage)
+		global.PUT("/userNotify", messageHandler.SpecialNotifyMessage)
+
 	}
 
 	account := rg.NewGroupRouter(accoutHandler.UrlPrefix, router)
@@ -299,6 +303,13 @@ func RegisterRouter(router *httprouter.Router) {
 		message.PUT("/visitor/status", messageHandler.visitorChecked)
 		message.POST("/visitorTime/:userId", messageHandler.checkVisitorTime)
 		message.GET("/newVisitor/:userId", messageHandler.CheckNewVisitor)
+		message.GET("/newSystemMessage/:userId", messageHandler.HasNewSystemMessage)
+		message.POST("/systemMessageTime/:userId", messageHandler.ReviewSystemMessage)
+		message.GET("/newThumbUp/:userId", messageHandler.HasThumbUpMessage)
+		message.POST("/thumbUpTime/:userId", messageHandler.ReviewThumbUpMessage)
+		message.GET("/newForumReply/:userId", messageHandler.NewForumReply2Me)
+		message.POST("/forumReplyTime/:userId", messageHandler.ReviewForumReply2Me)
+
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)

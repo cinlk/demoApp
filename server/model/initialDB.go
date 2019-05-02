@@ -17,6 +17,9 @@ func CreateTables() {
 
 	_ = orm.DB.Exec("CREATE TYPE role AS ENUM ('seeker', 'recruiter')").Error
 
+	// 通知类型
+	_ = orm.DB.Exec("CREATE TYPE notify AS ENUM ('system', 'channel', 'special')").Error
+
 	// create table
 	//orm.DB.SetLogger(gLog.GetLogUtil())
 	err := orm.DB.AutoMigrate(&dbModel.AppGuidanceItem{}, &dbModel.NewsModel{}, &dbModel.Account{}, &dbModel.Recruiter{},
@@ -25,7 +28,8 @@ func CreateTables() {
 		&dbModel.CareerTalk{}, &dbModel.UserApplyCarrerTalk{}, &dbModel.Company{}, &dbModel.CompuseJobs{}, &dbModel.InternJobs{},
 		&dbModel.UserApplyJobs{}, &dbModel.ApplyClassify{}, &dbModel.TopWords{}, &dbModel.OnlineApply{},
 		&dbModel.UserOnlineApply{}, &dbModel.UserCompanyRelate{}, &dbModel.LeanCloudAccount{},
-		&dbModel.SingleConversation{}).Error
+		&dbModel.SingleConversation{}, &dbModel.SystemMessage{}, &dbModel.UserCheckSystemMessage{},
+		&dbModel.NotifyMessage{}, &dbModel.ForumReplyMyTime{}, &dbModel.ForumThumbUpTime{}).Error
 
 	if err != nil {
 		gLog.LOG_PANIC(err)
@@ -89,6 +93,18 @@ func CreateTables() {
 		gLog.LOG_PANIC(err)
 	}
 	err = orm.DB.Model(&dbModel.UserApplyCarrerTalk{}).AddForeignKey("career_talk_id", "career_talk(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.UserCheckSystemMessage{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.ForumReplyMyTime{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.ForumThumbUpTime{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
