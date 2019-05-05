@@ -235,14 +235,25 @@ func testSystemMessage() {
 	//if err != nil {
 	//	fmt.Println(err)
 	//}
-	var mode dbModel.ForumReplyMyTime
+	var mode dbModel.ForumThumbUpTime
 	testDB.Model(&dbModel.ForumThumbUpTime{}).Where("user_id = ?", "24b12069-4853-11e9-a446-a0999b089907").First(&mode)
-	testDB.Model(&mode).Update("latest_reply_time", &t)
-	fmt.Println(mode.CheckTime == nil, mode.LatestReplyTime)
+	testDB.Model(&mode).Update("latest_thumb_time", &t)
+	fmt.Println(mode.CheckTime == nil, mode.LatestThumbTime)
 
 }
 
-//print(recruiters)
+func testForum() {
+
+	// 创建帖子
+	err := testDB.Create(&dbModel.ForumHotestArticle{
+		Uuid: "2df1de31-6f16-11e9-8fa2-a0999b089907",
+	}).Error
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+}
 
 func main() {
 
@@ -256,5 +267,6 @@ func main() {
 	//testRecruitRelated()
 	//testVisitor()
 	//testLeanCloud()
-	testSystemMessage()
+	//testSystemMessage()
+	testForum()
 }

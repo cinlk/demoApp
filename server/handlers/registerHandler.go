@@ -200,6 +200,15 @@ func RegisterRouter(router *httprouter.Router) {
 		},
 	}
 
+	// forum
+	var forumHandler = forumHandler{
+		urlPrefix:  "/forum",
+		dbOperator: dbOperater.NewForumDboperator(),
+		validate: &jsonValidate{
+			requiredTag: "binding",
+		},
+	}
+
 	var testh = TestHandler{
 		UrlPrefix: "/test",
 	}
@@ -310,6 +319,11 @@ func RegisterRouter(router *httprouter.Router) {
 		message.GET("/newForumReply/:userId", messageHandler.NewForumReply2Me)
 		message.POST("/forumReplyTime/:userId", messageHandler.ReviewForumReply2Me)
 
+	}
+
+	forum := rg.NewGroupRouter(forumHandler.urlPrefix, router)
+	{
+		forum.POST("/articles", forumHandler.SectionArticles)
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)

@@ -29,7 +29,8 @@ func CreateTables() {
 		&dbModel.UserApplyJobs{}, &dbModel.ApplyClassify{}, &dbModel.TopWords{}, &dbModel.OnlineApply{},
 		&dbModel.UserOnlineApply{}, &dbModel.UserCompanyRelate{}, &dbModel.LeanCloudAccount{},
 		&dbModel.SingleConversation{}, &dbModel.SystemMessage{}, &dbModel.UserCheckSystemMessage{},
-		&dbModel.NotifyMessage{}, &dbModel.ForumReplyMyTime{}, &dbModel.ForumThumbUpTime{}).Error
+		&dbModel.NotifyMessage{}, &dbModel.ForumReplyMyTime{},
+		&dbModel.ForumThumbUpTime{}, &dbModel.ForumArticle{}, &dbModel.ForumHotestArticle{}).Error
 
 	if err != nil {
 		gLog.LOG_PANIC(err)
@@ -120,6 +121,16 @@ func CreateTables() {
 	}
 
 	err = orm.DB.Model(&dbModel.SingleConversation{}).AddForeignKey("recruiter_id", "lean_cloud_account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.ForumArticle{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.ForumHotestArticle{}).AddForeignKey("uuid", "forum_article(uuid)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
