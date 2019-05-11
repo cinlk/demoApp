@@ -32,4 +32,6 @@ func (t tString) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Itoa(int(m.Unix()))), nil
 }
 
-
+type HttpResultModel struct {
+	Result string `json:"result"`
+}

@@ -30,7 +30,10 @@ func CreateTables() {
 		&dbModel.UserOnlineApply{}, &dbModel.UserCompanyRelate{}, &dbModel.LeanCloudAccount{},
 		&dbModel.SingleConversation{}, &dbModel.SystemMessage{}, &dbModel.UserCheckSystemMessage{},
 		&dbModel.NotifyMessage{}, &dbModel.ForumReplyMyTime{},
-		&dbModel.ForumThumbUpTime{}, &dbModel.ForumArticle{}, &dbModel.ForumHotestArticle{}).Error
+		&dbModel.ForumThumbUpTime{}, &dbModel.ForumArticle{}, &dbModel.ForumHotestArticle{},
+		&dbModel.ReplyForumPost{}, &dbModel.SecondReplyPost{}, &dbModel.UserLikePost{},
+		&dbModel.UserLikeReply{},
+		&dbModel.UserCollectedPost{}).Error
 
 	if err != nil {
 		gLog.LOG_PANIC(err)
@@ -125,12 +128,57 @@ func CreateTables() {
 		gLog.LOG_PANIC(err)
 	}
 
+	// 论坛
 	err = orm.DB.Model(&dbModel.ForumArticle{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
 
 	err = orm.DB.Model(&dbModel.ForumHotestArticle{}).AddForeignKey("uuid", "forum_article(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.ReplyForumPost{}).AddForeignKey("post_uuid", "forum_article(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.ReplyForumPost{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.SecondReplyPost{}).AddForeignKey("reply_id", "reply_forum_post(reply_id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.SecondReplyPost{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.UserLikePost{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.UserLikePost{}).AddForeignKey("post_uuid", "forum_article(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.UserLikeReply{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.UserLikeReply{}).AddForeignKey("reply_id", "reply_forum_post(reply_id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.UserCollectedPost{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.UserCollectedPost{}).AddForeignKey("post_uuid", "forum_article(uuid)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}

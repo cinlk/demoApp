@@ -323,7 +323,16 @@ func RegisterRouter(router *httprouter.Router) {
 
 	forum := rg.NewGroupRouter(forumHandler.urlPrefix, router)
 	{
-		forum.POST("/articles", forumHandler.SectionArticles)
+		forum.POST("/articles", forumHandler.SectionArticles, middleware.FetchUserId)
+		forum.POST("/new/article", forumHandler.NewArticle, middleware.AuthorizationVerify)
+		forum.PUT("/article/count/:postId", forumHandler.ReadPostCount)
+		// 获取所有子回复
+		forum.POST("/article/replys", forumHandler.PostReply)
+		forum.PUT("/article/like", forumHandler.LikePost, middleware.AuthorizationVerify)
+		forum.PUT("/article/collect", forumHandler.CollectedPost, middleware.AuthorizationVerify)
+		// 发布回复
+		forum.POST("/article/reply", forumHandler.UserReplyPost, middleware.AuthorizationVerify)
+		forum.DELETE("/article/:postId", forumHandler.RemovePost, middleware.AuthorizationVerify)
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)

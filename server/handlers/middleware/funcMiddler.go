@@ -13,6 +13,33 @@ import (
 	"net/http"
 )
 
+// 获取用户id
+func FetchUserId(handler httprouter.Handle) httprouter.Handle {
+
+	fetch := func(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
+		token, err := request.ParseFromRequest(r, request.OAuth2Extractor, func(token *jwt.Token) (i interface{}, e error) {
+			return []byte(config.JWTAuthSection.Key("salt").MustString(utils.SALT)), nil
+		}, request.WithClaims(&jwt_auth.UserClaim{}))
+
+		if err != nil || !token.Valid {
+			goto last
+		}
+
+		if claim, ok := token.Claims.(*jwt_auth.UserClaim); ok {
+			r.Header.Set(utils.USER_ID, claim.Uuid)
+			r.Header.Set(utils.USER_ROLE, claim.Role)
+			handler(w, r, param)
+			return
+		}
+	last:
+		// 前端 如何判断 401
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+
+	}
+
+	return httprouter.Handle(fetch)
+}
+
 func AuthorizationVerify(handle httprouter.Handle) httprouter.Handle {
 
 	auth := func(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
