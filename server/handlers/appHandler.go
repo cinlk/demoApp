@@ -172,3 +172,15 @@ func (app *appHandler) jobWarns(w http.ResponseWriter, r *http.Request, _ httpro
 
 	app.JSON(w, warns, http.StatusOK)
 }
+
+// 举报 论坛信息
+func (app *appHandler) forumWarns(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+	var warns = struct {
+		Warns []string `json:"warns"`
+	}{
+		Warns: []string{"广告及垃圾信息", "抄袭或设计侵权", "不友善/社情/低俗内容", "政治铭感", "其他"},
+	}
+
+	app.JSON(w, warns, http.StatusOK)
+}

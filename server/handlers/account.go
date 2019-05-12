@@ -263,8 +263,16 @@ func (a *accountHandle) ResetAccountPassword(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// 获取leancloud 账号id
+	var lc = a.db.FindLeanCloudId(req.Account)
+	if lc == nil {
+		a.ERROR(w, errors.Wrap(err, "not exit leancloud account"), http.StatusInternalServerError)
+		return
+	}
+
 	a.JSON(w, tokenRes{
-		Token: token,
+		Token:       token,
+		LeanCloudId: lc.UserId,
 	}, http.StatusAccepted)
 
 }

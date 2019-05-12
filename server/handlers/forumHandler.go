@@ -14,15 +14,31 @@ type forumSectionItemReq struct {
 	Limit  int
 }
 
+// 帖子的回复
 type forumSubReplyReq struct {
 	PostId string `json:"post_id" binding:"required"`
 	Offset int
 	Limit  int
 }
 
+// 回复的回复
+type forumSecondReplyReq struct {
+	ReplyId string `json:"reply_id" binding:"required"`
+	Offset  int
+	Limit   int
+}
+
 type forumArticleLike struct {
-	PostId string `json:"post_id"`
+	PostId string `json:"post_id" binding:"required"`
 	Flag   bool   `json:"flag"`
+}
+type forumReplyLike struct {
+	ReplyId string `json:"reply_id" binding:"required"`
+	Flag    bool   `json:"flag"`
+}
+type forumSubReplyLike struct {
+	SubReplyId string `json:"sub_reply_id" binding:"required"`
+	Flag       bool   `json:"flag"`
 }
 
 type postArticleReq struct {
@@ -34,6 +50,31 @@ type postArticleReq struct {
 type forumPostReplyReq struct {
 	PostId       string `json:"post_id" binding:"required"`
 	ReplyContent string `json:"reply_content" binding:"required"`
+}
+
+// 二级回复请求
+type forumPostSubReplyReq struct {
+	ReplyId      string `json:"reply_id" binding:"required"`
+	TalkedUserId string `json:"talked_user_id" binding:"required"`
+	Content      string `json:"content" binding:"required"`
+}
+
+// 举报帖子
+type forumAlertPostReq struct {
+	PostId  string `json:"post_id"`
+	Content string `json:"content"`
+}
+
+// 举报回复
+type forumAlertReplyReq struct {
+	ReplyId string `json:"reply_id"`
+	Content string `json:"content"`
+}
+
+// 举报二级回复
+type forumAlertSubReplyReq struct {
+	SubReplyId string `json:"sub_reply_id"`
+	Content    string `json:"content"`
 }
 
 type forumHandler struct {
@@ -106,6 +147,26 @@ func (f *forumHandler) RemovePost(w http.ResponseWriter, r *http.Request, para h
 	}, http.StatusAccepted)
 }
 
+// 删除一级回复
+func (f *forumHandler) RemoveReply(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
+	var replyId = para.ByName("replyId")
+	var userId = r.Header.Get(utils.USER_ID)
+
+	err := f.dbOperator.DeleteReply(replyId, userId)
+	if err != nil {
+		f.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	f.JSON(w, httpModel.HttpForumResponse{
+		httpModel.HttpResultModel{
+			Result: "success",
+		},
+		replyId,
+	}, http.StatusAccepted)
+
+}
+
 // 帖子的一级回复数据
 func (f *forumHandler) PostReply(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
 
@@ -115,7 +176,8 @@ func (f *forumHandler) PostReply(w http.ResponseWriter, r *http.Request, para ht
 		f.ERROR(w, err, http.StatusBadRequest)
 		return
 	}
-	res, err := f.dbOperator.PostContentInfo(req.PostId, req.Offset, req.Limit)
+	var userId = r.Header.Get(utils.USER_ID)
+	res, err := f.dbOperator.PostContentInfo(req.PostId, userId, req.Offset, req.Limit)
 	if err != nil {
 		f.ERROR(w, err, http.StatusUnprocessableEntity)
 		return
@@ -130,6 +192,52 @@ func (f *forumHandler) ReadPostCount(w http.ResponseWriter, r *http.Request, par
 
 	_ = f.dbOperator.PostReadCount(postId)
 
+	f.JSON(w, httpModel.HttpForumResponse{
+		httpModel.HttpResultModel{
+			Result: "success",
+		},
+		"",
+	}, http.StatusAccepted)
+}
+
+func (f *forumHandler) AlertPost(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var req forumAlertPostReq
+	var userId = r.Header.Get(utils.USER_ID)
+	err := f.validate.Validate(r, &req)
+	if err != nil {
+		f.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	_ = f.dbOperator.AlertPost(req.PostId, userId, req.Content)
+
+	w.WriteHeader(http.StatusAccepted)
+
+}
+
+func (f *forumHandler) AlertReply(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var req forumAlertReplyReq
+	var userId = r.Header.Get(utils.USER_ID)
+	err := f.validate.Validate(r, &req)
+	if err != nil {
+		f.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	_ = f.dbOperator.AlertReply(req.ReplyId, userId, req.Content)
+
+	w.WriteHeader(http.StatusAccepted)
+
+}
+
+func (f *forumHandler) AlertSubReply(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var req forumAlertSubReplyReq
+	var userId = r.Header.Get(utils.USER_ID)
+	err := f.validate.Validate(r, &req)
+	if err != nil {
+		f.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	_ = f.dbOperator.AlertSubReply(req.SubReplyId, userId, req.Content)
 	w.WriteHeader(http.StatusAccepted)
 }
 
@@ -204,4 +312,120 @@ func (f *forumHandler) UserReplyPost(w http.ResponseWriter, r *http.Request, _ h
 		},
 		rid,
 	}, http.StatusCreated)
+}
+
+// 获取子回复的 二级回复内容
+func (f *forumHandler) UserSubReplys(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+	var req forumSecondReplyReq
+	var userId = r.Header.Get(utils.USER_ID)
+	err := f.validate.Validate(r, &req)
+	if err != nil {
+		f.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	res, err := f.dbOperator.SecondReplys(req.ReplyId, userId, req.Offset, req.Limit)
+	if err != nil {
+		f.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	f.JSON(w, res, http.StatusOK)
+
+}
+
+// 发布二级回复
+func (f *forumHandler) NewSubReply(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+	var req forumPostSubReplyReq
+	var userId = r.Header.Get(utils.USER_ID)
+	err := f.validate.Validate(r, &req)
+	if err != nil {
+		f.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	id, err := f.dbOperator.RecordUserSubReply(userId, req.TalkedUserId, req.ReplyId, req.Content)
+	if err != nil {
+		f.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	f.JSON(w, httpModel.HttpForumResponse{
+		httpModel.HttpResultModel{
+			Result: "success",
+		},
+		id,
+	}, http.StatusCreated)
+
+}
+
+// 删除自己的二级回复
+func (f *forumHandler) RemoveMySubReply(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
+	var subReplyId = param.ByName("subReplyId")
+	var userId = r.Header.Get(utils.USER_ID)
+
+	err := f.dbOperator.DeleteSubReply(subReplyId, userId)
+	if err != nil {
+		f.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	f.JSON(w, httpModel.HttpForumResponse{
+		httpModel.HttpResultModel{
+			Result: "success",
+		},
+		subReplyId,
+	}, http.StatusAccepted)
+
+}
+
+// 子回复点赞
+func (f *forumHandler) UserLikeReply(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
+	var req forumReplyLike
+	err := f.validate.Validate(r, &req)
+	if err != nil {
+		f.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	var userId = r.Header.Get(utils.USER_ID)
+
+	err = f.dbOperator.LikeReply(userId, req.ReplyId, req.Flag)
+	if err != nil {
+		f.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	f.JSON(w, httpModel.HttpForumResponse{
+		httpModel.HttpResultModel{
+			"success",
+		},
+		"",
+	}, http.StatusAccepted)
+
+}
+
+// 二级回复点赞
+func (f *forumHandler) UserLikeSubReply(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
+	var req forumSubReplyLike
+	err := f.validate.Validate(r, &req)
+	if err != nil {
+		f.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	var userId = r.Header.Get(utils.USER_ID)
+	err = f.dbOperator.LikeSubReply(userId, req.SubReplyId, req.Flag)
+	if err != nil {
+		f.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	f.JSON(w, httpModel.HttpForumResponse{
+		httpModel.HttpResultModel{
+			"success",
+		},
+		"",
+	}, http.StatusAccepted)
+
 }

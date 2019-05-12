@@ -141,6 +141,12 @@ func (a *Account) FindAssociateUserByColume(orm *gorm.DB, name string) (uuid str
 
 }
 
+func (a *Account) FindLeanCloudUserId(orm *gorm.DB) *LeanCloudAccount {
+	var lc LeanCloudAccount
+	orm.Model(LeanCloudAccount{}).Where("uuid = ?", a.Uuid).First(&lc)
+	return &lc
+}
+
 func FindAccount(orm *gorm.DB, phone string) (*Account, error) {
 
 	var account Account
@@ -182,11 +188,14 @@ func CreateNewAccount(orm *gorm.DB, phone, password string) (uuid, lid string, e
 
 	session := orm.Begin()
 	var uid = utils.GetUUID()
+	// 默认 seek 角色
+
 	ob := Account{
 		Phone:    phone,
 		Password: password,
 		Uuid:     uid,
 		Email:    utils.GetUUID(),
+		Role:     utils2.DEFAULT_ROLE,
 		//User: User{
 		//	Uuid:  uid,
 		//},
@@ -197,6 +206,7 @@ func CreateNewAccount(orm *gorm.DB, phone, password string) (uuid, lid string, e
 		return "", "", err
 	}
 	// 创建普通用户
+	// 默认随机名称 和 用户头像
 	err = session.Create(&User{
 		Uuid: uid,
 	}).Error

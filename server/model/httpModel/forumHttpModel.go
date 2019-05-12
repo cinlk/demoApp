@@ -27,9 +27,29 @@ type HttpSubReplyInfo struct {
 	ReplyId     string  `json:"reply_id"`
 	UserIcon    string  `json:"user_icon"`
 	UserName    string  `json:"user_name"`
+	UserId      string  `json:"user_id"`
 	Colleage    string  `json:"colleage"`
 	CreatedTime tString `json:"created_time"`
 	Content     string  `json:"content"`
 	LikeCount   int     `json:"like_count"`
 	ReplyCount  int     `json:"reply_count"`
+	IsLike      bool    `json:"is_like"`
+}
+
+// 二级回复
+type HttpSecondReplyInfo struct {
+	ReplyId        string  `json:"reply_id"`
+	SecondReplyId  string  `json:"second_reply_id"`
+	Content        string  `json:"content"`
+	IsLike         bool    `json:"is_like"`
+	CreatedTime    tString `json:"created_time"`
+	LikeCount      int     `json:"like_count"`
+	UserId         string  `json:"user_id"`
+	UserIcon       string  `json:"user_icon"`
+	UserName       string  `json:"user_name"`
+	TalkedUserName string  `json:"talked_user_name"`
+	TalkedUserId   string  `json:"talked_user_id"`
+	ToHost         bool    `json:"to_host"`
+
+	HostUserId string `json:"-"`
 }

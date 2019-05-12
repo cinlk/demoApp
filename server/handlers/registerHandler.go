@@ -226,6 +226,7 @@ func RegisterRouter(router *httprouter.Router) {
 		global.GET("/city/college", apphandler.CitysCollege)
 		//global.GET("/near/meetings", )
 		global.GET("/jobs/warns", apphandler.jobWarns)
+		global.GET("/forum/warns", apphandler.forumWarns)
 
 		// 测试通知推送
 		global.PUT("/systemNotify", messageHandler.systemNotifyMessage)
@@ -327,12 +328,23 @@ func RegisterRouter(router *httprouter.Router) {
 		forum.POST("/new/article", forumHandler.NewArticle, middleware.AuthorizationVerify)
 		forum.PUT("/article/count/:postId", forumHandler.ReadPostCount)
 		// 获取所有子回复
-		forum.POST("/article/replys", forumHandler.PostReply)
+		forum.POST("/article/replys", forumHandler.PostReply, middleware.FetchUserId)
 		forum.PUT("/article/like", forumHandler.LikePost, middleware.AuthorizationVerify)
+		forum.PUT("/reply/like", forumHandler.UserLikeReply, middleware.AuthorizationVerify)
 		forum.PUT("/article/collect", forumHandler.CollectedPost, middleware.AuthorizationVerify)
+		forum.POST("/article/alert", forumHandler.AlertPost, middleware.AuthorizationVerify)
 		// 发布回复
 		forum.POST("/article/reply", forumHandler.UserReplyPost, middleware.AuthorizationVerify)
 		forum.DELETE("/article/:postId", forumHandler.RemovePost, middleware.AuthorizationVerify)
+		forum.DELETE("/reply/:replyId", forumHandler.RemoveReply, middleware.AuthorizationVerify)
+		forum.POST("/reply/alert", forumHandler.AlertReply, middleware.AuthorizationVerify)
+		// 子回复
+		forum.POST("/subreply", forumHandler.UserSubReplys, middleware.FetchUserId)
+		forum.POST("/newSubreply", forumHandler.NewSubReply, middleware.AuthorizationVerify)
+		forum.POST("/subReply/alert", forumHandler.AlertSubReply, middleware.AuthorizationVerify)
+		forum.PUT("/subReply/like", forumHandler.UserLikeSubReply, middleware.AuthorizationVerify)
+		forum.DELETE("/subReply/:subReplyId", forumHandler.RemoveMySubReply, middleware.AuthorizationVerify)
+
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)

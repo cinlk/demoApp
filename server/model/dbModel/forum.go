@@ -47,8 +47,11 @@ type ReplyForumPost struct {
 type SecondReplyPost struct {
 	gorm.Model `json:"-"`
 	// 一级回复的id
-	ReplyId       string `gorm:"ForeignKey:ReplyId;not null" json:"reply_id"`
-	UserId        string `gorm:"not null" json:"user_id"`
+	ReplyId string `gorm:"ForeignKey:ReplyId;not null" json:"reply_id"`
+	// 发起回复的用户
+	UserId string `gorm:"not null" json:"user_id"`
+	// 目标回复用户, 默认是一级回复的用户
+	TalkedUserId  string `gorm:"not null" json:"talked_user_id"`
 	Content       string `json:"content"`
 	SecondReplyId string `gorm:"unique;primary_key" json:"second_reply_id"`
 }
@@ -71,9 +74,40 @@ type UserLikeReply struct {
 	ReplyId    string `gorm:"not null" json:"reply_id"`
 }
 
+// 用户点赞的二级回复
+type UserLikeSubReply struct {
+	gorm.Model    `json:"-"`
+	UserId        string `gorm:"not null" json:"user_id"`
+	SecondReplyId string `gorm:"not null" json:"second_reply_id"`
+}
+
 // 用户收藏的帖子
 type UserCollectedPost struct {
 	gorm.Model `json:"-"`
 	UserId     string `gorm:"not null" json:"user_id"`
 	PostUuid   string `gorm:"not null" json:"post_uuid"`
+}
+
+// 用户举报的帖子
+type UserAlertPost struct {
+	gorm.Model `json:"-"`
+	UserId     string `gorm:"unique; not null" json:"user_id"`
+	PostId     string `gorm:"not null" json:"post_id"`
+	Content    string `gorm:"not null" json:"content"`
+}
+
+// 用户举报一级回复
+type UserAlertReply struct {
+	gorm.Model `json:"-"`
+	UserId     string `gorm:"unique;not null" json:"user_id"`
+	Content    string
+	ReplyId    string `gorm:"not null" json:"reply_id"`
+}
+
+// 用户举报二级回复
+type UserAlertSubReply struct {
+	gorm.Model    `json:"-"`
+	UserId        string `gorm:"not null" json:"user_id"`
+	Content       string `json:"content"`
+	SecondReplyId string `gorm:"not null" json:"second_reply_id"`
 }

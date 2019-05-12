@@ -48,6 +48,15 @@ func (a *AccountDbOperator) LoginAnonymous() (string, error) {
 	return a.claim.CreateDefaultToken("", utils2.ANONYMOUSE_ROLE)
 }
 
+// 获取leancloud 账号
+func (a *AccountDbOperator) FindLeanCloudId(phone string) *dbModel.LeanCloudAccount {
+	account, err := dbModel.FindAccount(a.orm, phone)
+	if err != nil {
+		return nil
+	}
+	return account.FindLeanCloudUserId(a.orm)
+}
+
 func (a *AccountDbOperator) LoginByPwd(phone, password string) (token, lid string, err error) {
 
 	account, err := dbModel.FindAccount(a.orm, phone)
@@ -157,6 +166,7 @@ func (a *AccountDbOperator) ResetPassword(phone, password string) (token string,
 		return "", err
 	}
 	account, err := dbModel.FindAccount(a.orm, phone)
+
 	if err == gorm.ErrRecordNotFound {
 
 		return "", &errorStatus.AppError{

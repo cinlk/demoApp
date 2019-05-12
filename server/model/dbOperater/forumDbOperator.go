@@ -111,14 +111,23 @@ func (f *ForumDboperator) DeletePostBy(postId, userId string) error {
 	return nil
 }
 
-func (f *ForumDboperator) PostContentInfo(postId string, offset, limit int) ([]httpModel.HttpSubReplyInfo, error) {
+func (f *ForumDboperator) DeleteReply(replyId, userId string) error {
+	return f.orm.Delete(dbModel.ReplyForumPost{}, "reply_id = ? and user_id = ? ", replyId, userId).Error
+}
+
+func (f *ForumDboperator) DeleteSubReply(subReplyId, userId string) error {
+
+	return f.orm.Delete(dbModel.SecondReplyPost{}, "second_reply_id = ? and user_id = ?", subReplyId, userId).Error
+}
+
+func (f *ForumDboperator) PostContentInfo(postId, userId string, offset, limit int) ([]httpModel.HttpSubReplyInfo, error) {
 	// 查询帖子 的子回复信息
 	var res []httpModel.HttpSubReplyInfo
 
 	err := f.orm.Model(&dbModel.ReplyForumPost{}).Where("post_uuid = ?", postId).
 		Joins("inner join \"user\" on \"user\".uuid =  reply_forum_post.user_id").
 		Select("\"user\".user_icon, \"user\".name as user_name, reply_forum_post.created_at as created_time, " +
-			"reply_forum_post.content, reply_forum_post.reply_id").
+			"reply_forum_post.content, reply_forum_post.user_id,reply_forum_post.reply_id").
 		Offset(offset).Limit(limit).Order("reply_forum_post.created_at").
 		Scan(&res).Error
 	if err != nil {
@@ -127,6 +136,11 @@ func (f *ForumDboperator) PostContentInfo(postId string, offset, limit int) ([]h
 	for i := 0; i < len(res); i++ {
 		_ = f.orm.Model(&dbModel.UserLikeReply{}).Where("reply_id = ?", res[i].ReplyId).Count(&res[i].LikeCount)
 		_ = f.orm.Model(&dbModel.SecondReplyPost{}).Where("reply_id = ?", res[i].ReplyId).Count(&res[i].ReplyCount)
+		var exist int = 0
+		_ = f.orm.Model(&dbModel.UserLikeReply{}).Where("reply_id = ? and user_id = ?", res[i].ReplyId, userId).Count(&exist)
+		if exist == 1 {
+			res[i].IsLike = true
+		}
 	}
 
 	return res, nil
@@ -163,6 +177,57 @@ func (f *ForumDboperator) UserLikePost(userId, postId string, b bool) error {
 	}
 	session.Commit()
 	return nil
+}
+
+func (f *ForumDboperator) LikeReply(userId, replyId string, b bool) error {
+	session := f.orm.Begin()
+	if b {
+		// 发送通知 TODO
+		err := session.Where("reply_id = ? and user_id = ?", replyId, userId).FirstOrCreate(&dbModel.UserLikeReply{
+			UserId:  userId,
+			ReplyId: replyId,
+		}).Error
+		if err != nil {
+			session.Rollback()
+			return err
+		}
+	} else {
+		err := session.Unscoped().Delete(dbModel.UserLikeReply{}, "user_id = ? and reply_id = ?", userId, replyId).Error
+		if err != nil {
+			session.Rollback()
+			return err
+		}
+	}
+
+	session.Commit()
+	return nil
+}
+
+// 点赞子回复
+func (f *ForumDboperator) LikeSubReply(userId, subReplyId string, b bool) error {
+
+	session := f.orm.Begin()
+	if b {
+		// 发送通知 TODO
+		err := session.Where("second_reply_id = ? and user_id = ?", subReplyId, userId).FirstOrCreate(&dbModel.UserLikeSubReply{
+			UserId:        userId,
+			SecondReplyId: subReplyId,
+		}).Error
+		if err != nil {
+			session.Rollback()
+			return err
+		}
+	} else {
+		err := session.Unscoped().Delete(dbModel.UserLikeSubReply{}, "user_id = ? and second_reply_id = ?", userId, subReplyId).Error
+		if err != nil {
+			session.Rollback()
+			return err
+		}
+	}
+
+	session.Commit()
+	return nil
+
 }
 
 func (f *ForumDboperator) UserCollectedPost(userId, postId string, b bool) error {
@@ -212,6 +277,105 @@ func (f *ForumDboperator) RecordUserReplyPost(userId, postId, content string) (s
 	session.Commit()
 
 	return rid, nil
+}
+
+func (f *ForumDboperator) RecordUserSubReply(userId, talkedUserId, replyId, content string) (string, error) {
+	var sid = utils.GetUUID()
+	sesion := f.orm.Begin()
+	err := sesion.Create(&dbModel.SecondReplyPost{
+		ReplyId:       replyId,
+		UserId:        userId,
+		TalkedUserId:  talkedUserId,
+		Content:       content,
+		SecondReplyId: sid,
+	}).Error
+	if err != nil {
+		sesion.Rollback()
+		return "", err
+	}
+	// 发送通知 TODO
+
+	sesion.Commit()
+
+	return sid, nil
+}
+
+// 回复的回复列表
+func (f *ForumDboperator) SecondReplys(replyId, userid string, offset, limit int) ([]httpModel.HttpSecondReplyInfo, error) {
+	var hostUserId struct {
+		UserId string `json:"user_id"`
+	}
+	err := f.orm.Model(&dbModel.ReplyForumPost{}).Where("reply_id = ?", replyId).Select("user_id").Scan(&hostUserId).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var res []httpModel.HttpSecondReplyInfo
+	// 根据replyid  获取数据
+	err = f.orm.Model(&dbModel.SecondReplyPost{}).
+		Joins("inner join \"user\" on \"user\".uuid =  second_reply_post.user_id").
+		Where("reply_id = ?", replyId).
+		Select("second_reply_post.reply_id, second_reply_post.user_id, second_reply_post.content, second_reply_post.second_reply_id," +
+			" second_reply_post.talked_user_id, second_reply_post.created_at as created_time,\"user\".name as user_name, \"user\".user_icon ").
+		Limit(limit).Offset(offset).Order("second_reply_post.created_at").
+		Scan(&res).Error
+	if err != nil {
+
+		return nil, err
+	}
+	// 逻辑判断
+	for i := 0; i < len(res); i++ {
+		if res[i].TalkedUserId == hostUserId.UserId {
+			res[i].ToHost = true
+		}
+		// 获取talkeduser 的名字
+		_ = f.orm.Model(&dbModel.User{}).Where("uuid = ?", res[i].TalkedUserId).Select("name as talked_user_name").Scan(&res[i])
+		// 获取点赞次数 和 我是否点赞的记录
+		_ = f.orm.Model(&dbModel.UserLikeSubReply{}).Where("second_reply_id = ?", res[i].SecondReplyId).Count(&res[i].LikeCount).Error
+		if userid != "" {
+			var exist int
+			_ = f.orm.Model(&dbModel.UserLikeSubReply{}).Where("second_reply_id = ? and user_id = ?", res[i].SecondReplyId, userid).Count(&exist).Error
+			if exist == 1 {
+				res[i].IsLike = true
+			}
+		}
+
+	}
+
+	return res, nil
+}
+
+func (f *ForumDboperator) AlertPost(postId, userId, content string) error {
+
+	return f.orm.Where("user_id = ?", userId).Assign(dbModel.UserAlertPost{
+		Content: content,
+	}).FirstOrCreate(&dbModel.UserAlertPost{
+		UserId:  userId,
+		PostId:  postId,
+		Content: content,
+	}).Error
+}
+
+func (f *ForumDboperator) AlertReply(replyId, userId, content string) error {
+	return f.orm.Where("user_id = ?", userId).
+		Assign(dbModel.UserAlertReply{
+			Content: content,
+		}).FirstOrCreate(&dbModel.UserAlertReply{
+		UserId:  userId,
+		Content: content,
+		ReplyId: replyId,
+	}).Error
+}
+
+func (f *ForumDboperator) AlertSubReply(subReplyId, userId, content string) error {
+	return f.orm.Where("user_id = ?", userId).Assign(
+		dbModel.UserAlertSubReply{
+			Content: content,
+		}).FirstOrCreate(&dbModel.UserAlertSubReply{
+		UserId:        userId,
+		SecondReplyId: subReplyId,
+		Content:       content,
+	}).Error
 }
 
 func NewForumDboperator() *ForumDboperator {
