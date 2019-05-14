@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"goframework/orm"
 	"goframework/utils"
+	"time"
 )
 
 const (
@@ -235,7 +236,7 @@ func (f *ForumDboperator) UserCollectedPost(userId, postId string, b bool) error
 	session := f.orm.Begin()
 	if b {
 
-		err := session.FirstOrCreate(&dbModel.UserCollectedPost{
+		err := session.Where("user_id = ? and post_uuid = ?", userId, postId).FirstOrCreate(&dbModel.UserCollectedPost{
 			UserId:   userId,
 			PostUuid: postId,
 		}).Error
@@ -347,7 +348,7 @@ func (f *ForumDboperator) SecondReplys(replyId, userid string, offset, limit int
 
 func (f *ForumDboperator) AlertPost(postId, userId, content string) error {
 
-	return f.orm.Where("user_id = ?", userId).Assign(dbModel.UserAlertPost{
+	return f.orm.Where("user_id = ? and post_id = ?", userId, postId).Assign(dbModel.UserAlertPost{
 		Content: content,
 	}).FirstOrCreate(&dbModel.UserAlertPost{
 		UserId:  userId,
@@ -357,7 +358,7 @@ func (f *ForumDboperator) AlertPost(postId, userId, content string) error {
 }
 
 func (f *ForumDboperator) AlertReply(replyId, userId, content string) error {
-	return f.orm.Where("user_id = ?", userId).
+	return f.orm.Where("user_id = ? and reply_id = ?", userId, replyId).
 		Assign(dbModel.UserAlertReply{
 			Content: content,
 		}).FirstOrCreate(&dbModel.UserAlertReply{
@@ -368,7 +369,7 @@ func (f *ForumDboperator) AlertReply(replyId, userId, content string) error {
 }
 
 func (f *ForumDboperator) AlertSubReply(subReplyId, userId, content string) error {
-	return f.orm.Where("user_id = ?", userId).Assign(
+	return f.orm.Where("user_id = ? and second_reply_id = ? ", userId, subReplyId).Assign(
 		dbModel.UserAlertSubReply{
 			Content: content,
 		}).FirstOrCreate(&dbModel.UserAlertSubReply{
@@ -376,6 +377,48 @@ func (f *ForumDboperator) AlertSubReply(subReplyId, userId, content string) erro
 		SecondReplyId: subReplyId,
 		Content:       content,
 	}).Error
+}
+
+// test
+func (f *ForumDboperator) SearchPostBy(word, userId string, offset, limit int) ([]httpModel.HttpForumHttpModel, error) {
+	time.Sleep(time.Second * 3)
+	var res []httpModel.HttpForumHttpModel
+
+	var testId = "9d749020-6fd1-11e9-a932-a0999b089907"
+	// 搜索逻辑  TODO
+	err := f.orm.Model(&dbModel.ForumArticle{}).
+		Joins("inner join \"user\" on \"user\".uuid =  forum_article.user_id").
+		Select("forum_article.uuid, forum_article.title, forum_article.content, forum_article.user_id,"+
+			"forum_article.read_count as read, forum_article.type as kind, forum_article.created_at as created_time,  "+
+			"\"user\".name as user_name, \"user\".user_icon as user_icon").
+		Where("forum_article.validate = ? and forum_article.uuid = ?", true, testId).
+		Order("forum_article.created_at desc").Offset(offset).Limit(limit).
+		Scan(&res).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// 统计点赞和回复数据， 根据userid 检查该用户是否点赞和收藏该帖子
+	for i := 0; i < len(res); i++ {
+
+		_ = f.orm.Model(&dbModel.UserLikePost{}).Where("post_uuid = ?", res[i].Uuid).Count(&res[i].ThumbUp)
+		_ = f.orm.Model(&dbModel.ReplyForumPost{}).Where("post_uuid = ?", res[i].Uuid).Count(&res[i].Reply)
+		var like int
+		_ = f.orm.Model(&dbModel.UserLikePost{}).Where("post_uuid = ? and user_id = ?", res[i].Uuid, userId).Count(&like)
+		if like != 0 {
+			res[i].IsLike = true
+		}
+		var collected int
+		_ = f.orm.Model(&dbModel.UserCollectedPost{}).Where("post_uuid = ? and user_id = ?", res[i].Uuid, userId).Count(&collected)
+		if collected != 0 {
+			res[i].IsCollected = true
+		}
+
+	}
+
+	return res, nil
+
+	//return []string{"帖子1", "帖子2", "帖子3"}, nil
 }
 
 func NewForumDboperator() *ForumDboperator {

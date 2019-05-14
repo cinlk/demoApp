@@ -77,6 +77,13 @@ type forumAlertSubReplyReq struct {
 	Content    string `json:"content"`
 }
 
+// 搜索帖子请求
+type forumSearchReq struct {
+	Word   string `json:"word" binding:"required"`
+	Offset int    `json:"offset"`
+	Limit  int    `json:"limit"`
+}
+
 type forumHandler struct {
 	baseHandler
 	urlPrefix  string
@@ -427,5 +434,25 @@ func (f *forumHandler) UserLikeSubReply(w http.ResponseWriter, r *http.Request, 
 		},
 		"",
 	}, http.StatusAccepted)
+
+}
+
+// 搜索帖子 test
+
+func (f *forumHandler) SearchForumPost(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var req forumSearchReq
+	var userId = r.Header.Get(utils.USER_ID)
+	err := f.validate.Validate(r, &req)
+	if err != nil {
+		f.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	res, err := f.dbOperator.SearchPostBy(req.Word, userId, req.Offset, req.Limit)
+	if err != nil {
+		f.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	f.JSON(w, res, http.StatusOK)
 
 }

@@ -345,6 +345,9 @@ func RegisterRouter(router *httprouter.Router) {
 		forum.PUT("/subReply/like", forumHandler.UserLikeSubReply, middleware.AuthorizationVerify)
 		forum.DELETE("/subReply/:subReplyId", forumHandler.RemoveMySubReply, middleware.AuthorizationVerify)
 
+		// 搜索帖子
+		forum.POST("/search", forumHandler.SearchForumPost, middleware.FetchUserId)
+
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)
