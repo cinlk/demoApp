@@ -91,18 +91,17 @@ func createJobs() {
 }
 
 func createOnlineApplys() {
-	for i := 0; i < 12; i++ {
-		item := dbModel.OnlineApply{}
-		item.Id = "网申" + strconv.Itoa(i)
-		item.CompanyID = "companyID"
-		item.Name = "测试完善"
-		t := time.Now().Add(time.Hour * 5)
-		item.EndTime = &t
-		item.LocationCity = []string{"北京", "上海", "深圳"}
-		item.BusinessField = []string{"教育", "医疗", "互联网"}
-		item.Outside = false
-		item.Link = "https://www.baidu.com"
-		item.ContentType = dbModel.Text
+	for i := 0; i < 3; i++ {
+		item := dbModel.UserDeliveryStatusHistory{}
+
+		t := time.Now().Add(time.Duration(rand.Int()) * time.Second)
+		//t := time.Now().Add(time.Hour * 5)
+		item.Status = i + 1
+		item.Time = &t
+		item.UserId = "1c0874f5-74c0-11e9-914b-a0999b089907"
+		item.Describe = ""
+		item.Type = "onlineApply"
+		item.JobId = "1"
 		err := testDB.Create(&item).Error
 		if err != nil {
 			fmt.Println(err)
@@ -261,12 +260,12 @@ func main() {
 	//createJobs()
 	//creatCarrerTalk()
 	//createNews()
-	//createOnlineApplys()
+	createOnlineApplys()
 	//createInternJobs()
 	//relatedQuery()
 	//testRecruitRelated()
 	//testVisitor()
 	//testLeanCloud()
 	//testSystemMessage()
-	testForum()
+	//testForum()
 }

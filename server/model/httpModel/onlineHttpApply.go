@@ -3,25 +3,27 @@ package httpModel
 import "github.com/lib/pq"
 
 type HttpOnlineApplyModel struct {
-	Id   string `json:"id"`
-	CompanyID   string `json:"company_id"`
-	Link string `json:"link,omitempty"`
-	Name string `json:"name,omitempty"`
-	IconURL string `json:"icon_url,omitempty"`
-	CreatedTime tString `json:"created_time"`
-	Company HttpCompanyModel `json:"company,omitempty"`
-	EndTime  tString `json:"end_time"`
-	Citys  pq.StringArray `json:"citys,omitempty"`
-	Positions pq.StringArray `json:"positions,omitempty"`
-	Major pq.StringArray `json:"major,omitempty"`
-	Content string `json:"content"`
-	ContentType  string `json:"content_type"`
-	OuterSide  bool `json:"outer_side"`
-
+	Id          string           `json:"id"`
+	CompanyID   string           `json:"company_id"`
+	Link        string           `json:"link,omitempty"`
+	Name        string           `json:"name,omitempty"`
+	IconURL     string           `json:"icon_url,omitempty"`
+	CreatedTime tString          `json:"created_time"`
+	Company     HttpCompanyModel `json:"company,omitempty"`
+	EndTime     tString          `json:"end_time"`
+	Citys       pq.StringArray   `json:"citys,omitempty"`
+	//Positions pq.StringArray `json:"positions,omitempty"`
+	Positions   []HttpOnlinePositionModel `json:"positions,omitempty"`
+	Major       pq.StringArray            `json:"major,omitempty"`
+	Content     string                    `json:"content"`
+	ContentType string                    `json:"content_type"`
+	OuterSide   bool                      `json:"outer_side"`
 	// user relation
-	IsCollected  bool `json:"is_collected"`
-
-
+	IsCollected bool `json:"is_collected"`
+}
+type HttpOnlinePositionModel struct {
+	PositionId   uint   `json:"position_id"`
+	PositionName string `json:"position_name"`
 }
 
 type HttpOnlineApplyListModel struct {
@@ -34,5 +36,4 @@ type HttpOnlineApplyListModel struct {
 	CompanyName    string         `json:"company_name"`
 	OutSide        bool           `json:"out_side"`
 	Link           string         `json:"link"`
-	
 }

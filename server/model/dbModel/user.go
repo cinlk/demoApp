@@ -81,6 +81,11 @@ type User struct {
 	LastLogin *time.Time `gorm:"default:now()" json:"-"`
 	//Account    Account   `gorm:"ForeignKey:Phone;AssociationForeignKey:Phone"`
 	UserIcon string `json:"user_icon"`
+
+	// 性别  0 男性 1 女性  其他 不确定
+	Gender int `gorm:"default:0" json:"gender"`
+	// 学校
+	College string `json:"college"`
 	//CarrerTalks []UserCarrerTalk `gorm:"ForeignKey:UserId;AssociationForeignKey:UserId" json:"carrer_talks"`
 	CheckVisitorTime *time.Time `json:"check_visitor_time"`
 	// 关联的我的访问者

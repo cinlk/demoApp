@@ -6,19 +6,28 @@ import (
 	"time"
 )
 
-type jobType string
+type JobType string
+
+func (t JobType) Validate() bool {
+	switch t {
+	case intern, graduate, onlineApply:
+		return true
+	default:
+		return false
+	}
+}
 
 const (
-	intern      jobType = "intern"
-	graduate    jobType = "graduate"
-	onlineApply jobType = "onlineApply"
-	All         jobType = "all"
+	intern      JobType = "intern"
+	graduate    JobType = "graduate"
+	onlineApply JobType = "onlineApply"
+	All         JobType = "all"
 )
 
 type CompuseJobs struct {
 	BaseModel
 	// 职位类型 TODO
-	Type jobType `gorm:"type:mood" json:"type"`
+	Type JobType `gorm:"type:mood" json:"type"`
 	// 职位附加描述
 	Benefits string `json:"benefits"`
 	// 职位地址
@@ -31,7 +40,7 @@ type CompuseJobs struct {
 	Major pq.StringArray `gorm:"type:text[]" json:"major"`
 	// 职位类型标签（公司检索职位使用）
 	Tags         pq.StringArray `gorm:"type:text[]" json:"tags"`
-	LocationCity pq.StringArray `gorm:"type:text[]" json:"location_city"`
+	LocationCity pq.StringArray `gorm:"type:text[]" json:"LocationCity"`
 	Salary       string         `json:"salary"`
 	Education    string         `json:"education"`
 	// 申请截止时间
@@ -68,4 +77,9 @@ type UserApplyJobs struct {
 	IsCollected bool   `gorm:"default:false" json:"is_collected"`
 	IsApply     bool   `gorm:"default:false" json:"is_apply"`
 	IsTalk      bool   `gorm:"default:false" json:"is_talk"`
+	// 投递的状态 0 投递成功  1 2 3 4
+	Status int `gorm:"default:0"`
+	// Hr 当前反馈
+	FeedBack string  `json:"feed_back"`
+	JobType  JobType `gorm:"type:mood" json:"type"`
 }

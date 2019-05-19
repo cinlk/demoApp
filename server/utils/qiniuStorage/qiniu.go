@@ -5,7 +5,6 @@ import (
 	"context"
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
-	"os"
 	"time"
 )
 
@@ -82,8 +81,15 @@ func PubluicBucketFile(imageName string) string {
 }
 
 func InitialQiNiuStorage() {
-	mac = qbox.NewMac(os.Getenv("ACCESS_KEY"), os.Getenv("SECRET_KEY"))
-	bucket = os.Getenv("BUCKET")
-	bucketDomain = os.Getenv("PRIVATE_BUCKET_DOMAIN")
-	publicBucketDomain = os.Getenv("PUBLIC_BUCKET_DOMAIN")
+	//mac = qbox.NewMac(os.Getenv("ACCESS_KEY"), os.Getenv("SECRET_KEY"))
+	//bucket = os.Getenv("BUCKET")
+	//bucketDomain = os.Getenv("PRIVATE_BUCKET_DOMAIN")
+	//publicBucketDomain = os.Getenv("PUBLIC_BUCKET_DOMAIN")
+
+	mac = qbox.NewMac("Six34sWKrmERbPsTrY5kg3xJEET1-64Nm4Uk9dSu",
+		"P5IZdaQ2OW0JqP1HkNVP1WGFB7duWlULhbFxB5G3")
+
+	bucket = "syzxbucket"
+	bucketDomain = "http://pic.yihu.bingfengtech.com"
+	publicBucketDomain = "http://pic-public.yihu.bingfengtech.com"
 }

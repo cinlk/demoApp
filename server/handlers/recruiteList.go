@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"demoApp/server/model/dbOperater"
+	"demoApp/server/model/httpModel"
 	"demoApp/server/utils"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"net/http"
+	"strconv"
 )
 
 type onlineQueryPage struct {
@@ -87,6 +89,27 @@ func (re *recruiteListHandle) findOnlineApply(w http.ResponseWriter, r *http.Req
 	res := re.dbOperator.OnlineApplyInfo(id, userId)
 
 	re.JSON(w, res, http.StatusOK)
+}
+
+// 申请网申职位
+func (re *recruiteListHandle) applyOnlineJob(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
+	var userId = r.Header.Get(utils.USER_ID)
+	var onlineApplyId = param.ByName("onlineId")
+	var positiobId = param.ByName("positionId")
+	pid, err := strconv.Atoi(positiobId)
+	if err != nil {
+		re.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	b, err := re.dbOperator.ApplyOnlieJob(userId, onlineApplyId, pid)
+	if err != nil {
+		re.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	re.JSON(w, map[string]interface{}{
+		"exist": b,
+	}, http.StatusCreated)
 }
 
 func (re *recruiteListHandle) careerTalks(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -197,6 +220,23 @@ func (re *recruiteListHandle) findInternJob(w http.ResponseWriter, r *http.Reque
 
 	re.JSON(w, res, http.StatusOK)
 
+}
+
+// 申请校招和实习职位
+func (re *recruiteListHandle) applyJob(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
+	var userId = r.Header.Get(utils.USER_ID)
+	var jobId = param.ByName("jobId")
+	var t = param.ByName("type")
+
+	err := re.dbOperator.ApplyJob(userId, jobId, t)
+	if err != nil {
+		re.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	re.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusCreated)
 }
 
 // 根据招聘者信息 查找他所在的公司和发布的职位

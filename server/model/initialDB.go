@@ -27,13 +27,16 @@ func CreateTables() {
 		&dbModel.Banners{}, &dbModel.LatestNews{}, &dbModel.JobCategory{}, &dbModel.TopJobs{},
 		&dbModel.CareerTalk{}, &dbModel.UserApplyCarrerTalk{}, &dbModel.Company{}, &dbModel.CompuseJobs{}, &dbModel.InternJobs{},
 		&dbModel.UserApplyJobs{}, &dbModel.ApplyClassify{}, &dbModel.TopWords{}, &dbModel.OnlineApply{},
-		&dbModel.UserOnlineApply{}, &dbModel.UserCompanyRelate{}, &dbModel.LeanCloudAccount{},
+		&dbModel.UserOnlineApplyPosition{}, &dbModel.OnlineApplyPosition{}, &dbModel.UserCollectedOnlineApply{},
+		&dbModel.UserCompanyRelate{}, &dbModel.LeanCloudAccount{},
 		&dbModel.SingleConversation{}, &dbModel.SystemMessage{}, &dbModel.UserCheckSystemMessage{},
 		&dbModel.NotifyMessage{}, &dbModel.ForumReplyMyTime{},
 		&dbModel.ForumThumbUpTime{}, &dbModel.ForumArticle{}, &dbModel.ForumHotestArticle{},
 		&dbModel.ReplyForumPost{}, &dbModel.SecondReplyPost{}, &dbModel.UserLikePost{},
 		&dbModel.UserLikeReply{}, &dbModel.UserLikeSubReply{},
-		&dbModel.UserCollectedPost{}, &dbModel.UserAlertPost{}, &dbModel.UserAlertReply{}, &dbModel.UserAlertSubReply{}).Error
+		&dbModel.UserCollectedPost{}, &dbModel.UserAlertPost{},
+		&dbModel.UserAlertReply{}, &dbModel.UserAlertSubReply{},
+		&dbModel.UserDeliveryStatusHistory{}).Error
 
 	if err != nil {
 		gLog.LOG_PANIC(err)
@@ -80,14 +83,34 @@ func CreateTables() {
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
-	err = orm.DB.Model(&dbModel.UserOnlineApply{}).AddForeignKey("user_id", "\"user\"(uuid)", "CASCADE", "CASCADE").Error
+	err = orm.DB.Model(&dbModel.UserOnlineApplyPosition{}).AddForeignKey("user_id", "\"user\"(uuid)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
-	err = orm.DB.Model(&dbModel.UserOnlineApply{}).AddForeignKey("online_apply_id", "online_apply(id)", "CASCADE", "CASCADE").Error
+	err = orm.DB.Model(&dbModel.UserOnlineApplyPosition{}).AddForeignKey("online_apply_id", "online_apply(id)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
+	err = orm.DB.Model(&dbModel.UserOnlineApplyPosition{}).AddForeignKey("position_id", "online_apply_position(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.OnlineApplyPosition{}).AddForeignKey("online_apply_id", "online_apply(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.UserCollectedOnlineApply{}).AddForeignKey("online_apply_id", "online_apply(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.UserCollectedOnlineApply{}).AddForeignKey("user_id", "\"user\"(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
 	err = orm.DB.Model(&dbModel.CompuseJobs{}).AddForeignKey("recruiter_uuid", "recruiter(uuid)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		gLog.LOG_PANIC(err)
@@ -225,6 +248,11 @@ func CreateTables() {
 		gLog.LOG_PANIC(err)
 	}
 
+	// person
+	err = orm.DB.Model(&dbModel.UserDeliveryStatusHistory{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
 }
 
 func CloseDB() {

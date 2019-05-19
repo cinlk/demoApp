@@ -209,6 +209,14 @@ func RegisterRouter(router *httprouter.Router) {
 		},
 	}
 
+	// person
+	var personHandler = personHandler{
+		UrlPrefix: "/person",
+		db:        dbOperater.NewPersonDbOperator(),
+		validate: &jsonValidate{
+			requiredTag: "binding",
+		},
+	}
 	var testh = TestHandler{
 		UrlPrefix: "/test",
 	}
@@ -294,9 +302,11 @@ func RegisterRouter(router *httprouter.Router) {
 		recruit.POST("/graduate", recruitHandler.graduatejobs)
 		recruit.POST("/intern", recruitHandler.internjobs)
 		recruit.GET("/online/:id", recruitHandler.findOnlineApply)
+		recruit.PUT("/online/:onlineId/:positionId", recruitHandler.applyOnlineJob)
 		recruit.GET("/meeting/:id", recruitHandler.findCareerTalk)
 		recruit.GET("/company/:id", recruitHandler.findCompany)
 		recruit.GET("/graduate/:id", recruitHandler.findGraduate)
+		recruit.PUT("/job/:type/:jobId", recruitHandler.applyJob)
 		recruit.GET("/intern/:id", recruitHandler.findInternJob)
 		recruit.GET("/recruiter/:id", recruitHandler.recruiterCompanyAndJobs)
 		recruit.POST("/tag/jobs", recruitHandler.companyTagJobs)
@@ -348,6 +358,16 @@ func RegisterRouter(router *httprouter.Router) {
 		// 搜索帖子
 		forum.POST("/search", forumHandler.SearchForumPost, middleware.FetchUserId)
 
+	}
+
+	// 个人主页
+	person := rg.NewGroupRouter(personHandler.UrlPrefix, router, middleware.AuthorizationVerify)
+	{
+		person.POST("/avatar", personHandler.updateAvatar)
+		person.POST("/brief", personHandler.BriefInfos)
+		person.GET("/delivery", personHandler.DeliveryJobList)
+		person.GET("/delivery/history/:type/:jobId", personHandler.JobDeliveryHistoryStatus)
+		person.GET("/onlineApplyId/:positionId", personHandler.FindOnlineApplyId)
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)

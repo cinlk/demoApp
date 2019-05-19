@@ -6,7 +6,9 @@ import (
 	"demoApp/server/utils"
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"github.com/pkg/errors"
 	"goframework/orm"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -51,18 +53,100 @@ func (r *RecruiteDboperator) ListApplyOnlines(citys []string, field, t string, o
 func (r *RecruiteDboperator) OnlineApplyInfo(onlineApplyId, userId string) httpModel.HttpOnlineApplyModel {
 
 	var online httpModel.HttpOnlineApplyModel
-
-	_ = r.orm.Model(&dbModel.UserOnlineApply{}).
+	// isCollected
+	_ = r.orm.Model(&dbModel.UserCollectedOnlineApply{}).
 		Where("user_id = ? and online_apply_id = ?", userId, onlineApplyId).Select("is_collected").Scan(&online)
+	// onlineapply info
 	_ = r.orm.Model(&dbModel.OnlineApply{}).Where("id = ?", onlineApplyId).
 		Select("link, name, icon_url, id, created_time, end_time, location_city as citys, " +
-			"positions, major, content_type, content, company_id, outside as outer_side").Scan(&online)
+			"major, content_type, content, company_id, outside as outer_side").Scan(&online)
+	// positions
+	_ = r.orm.Model(&dbModel.OnlineApplyPosition{}).Where("online_apply_id = ?",
+		onlineApplyId).Select("id as position_id, name as position_name").Scan(&online.Positions)
+
 	// company
 	_ = r.orm.Model(&dbModel.Company{}).Where("company.id = ?", online.CompanyID).
 		Select("id, link, name, icon_url, created_time, describe, simple_describe, feature_tags as tags, " +
 			"review_counts, business_field, citys, is_validate, total_staff as staff ").Scan(&online.Company)
 
 	return online
+}
+
+func (r *RecruiteDboperator) ApplyOnlieJob(userId, onlineApplyId string, positionId int) (bool, error) {
+	var exist int
+	err := r.orm.Model(&dbModel.UserOnlineApplyPosition{}).Where("user_id = ? and online_apply_id = ? and "+
+		"position_id = ?", userId, onlineApplyId, positionId).Count(&exist).Error
+	if err != nil {
+		return false, err
+	}
+	if exist == 1 {
+		return false, nil
+	}
+	session := r.orm.Begin()
+	err = session.Create(&dbModel.UserOnlineApplyPosition{
+		UserId:        userId,
+		OnlineApplyID: onlineApplyId,
+		PositionId:    uint(positionId),
+	}).Error
+	if err != nil {
+		session.Rollback()
+		return false, err
+	}
+	var currentTime = time.Now()
+	err = session.Where("user_id = ? and job_id = ? and status = ?", userId, onlineApplyId, 0).
+		FirstOrCreate(&dbModel.UserDeliveryStatusHistory{
+			UserId:   userId,
+			JobId:    strconv.Itoa(positionId),
+			Type:     dbModel.JobType("onlineApply"),
+			Status:   0,
+			Describe: "",
+			Time:     &currentTime,
+		}).Error
+	if err != nil {
+		session.Rollback()
+		return false, err
+	}
+	session.Commit()
+	return true, nil
+}
+
+func (r *RecruiteDboperator) ApplyJob(userId, jobId, t string) error {
+	var vt = dbModel.JobType(t)
+	if vt.Validate() == false {
+		return errors.New("not invalidate job type")
+	}
+	session := r.orm.Begin()
+
+	err := session.Where("user_id = ? and job_id =?", userId, jobId).Assign(&dbModel.UserApplyJobs{
+		IsApply: true,
+		JobType: vt,
+		Status:  0,
+	}).FirstOrCreate(&dbModel.UserApplyJobs{
+		UserId: userId,
+		JobId:  jobId,
+	}).Error
+	if err != nil {
+		session.Rollback()
+		return err
+	}
+	var currentTime = time.Now()
+	// 如果 status 不一样 就创建
+	err = session.Where("user_id = ? and job_id = ? and status = ?", userId, jobId, 0).
+		FirstOrCreate(&dbModel.UserDeliveryStatusHistory{
+			UserId:   userId,
+			JobId:    jobId,
+			Type:     vt,
+			Status:   0,
+			Describe: "",
+			Time:     &currentTime,
+		}).Error
+	if err != nil {
+		session.Rollback()
+		return err
+	}
+
+	session.Commit()
+	return nil
 }
 
 func (r *RecruiteDboperator) ListCareerTalk(college []string,
