@@ -2,6 +2,7 @@ package main
 
 import (
 	"demoApp/server/model/dbModel"
+	"demoApp/server/utils"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"math/rand"
@@ -260,7 +261,7 @@ func main() {
 	//createJobs()
 	//creatCarrerTalk()
 	//createNews()
-	createOnlineApplys()
+	//createOnlineApplys()
 	//createInternJobs()
 	//relatedQuery()
 	//testRecruitRelated()
@@ -268,4 +269,12 @@ func main() {
 	//testLeanCloud()
 	//testSystemMessage()
 	//testForum()
+	var ts = "2009-11"
+	t, err := time.Parse(utils.RESUME_TIME_FORMAT, ts)
+	if err != nil{
+		fmt.Println(err)
+	}
+	var rts = t.Format(utils.RESUME_TIME_FORMAT)
+	fmt.Println(t, rts)
+
 }

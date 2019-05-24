@@ -368,6 +368,57 @@ func RegisterRouter(router *httprouter.Router) {
 		person.GET("/delivery", personHandler.DeliveryJobList)
 		person.GET("/delivery/history/:type/:jobId", personHandler.JobDeliveryHistoryStatus)
 		person.GET("/onlineApplyId/:positionId", personHandler.FindOnlineApplyId)
+		person.GET("/resumes", personHandler.MyResumes)
+		person.POST("/textResume", personHandler.createTextResume)
+		person.POST("/attacheResume", personHandler.createNewAttachResume)
+		person.PUT("/primary/resume/:resumeId", personHandler.primaryResume)
+		person.POST("/resume/name", personHandler.resumeName)
+		person.DELETE("/resume/:type/:resumeId", personHandler.deleteResume)
+
+		// 文本简历
+		person.GET("/text/resume/:resumeId", personHandler.TextResumeInfo)
+		person.PUT("/textResume/baseInfo/avatar/:resumeId", personHandler.BaseInfoAvatar)
+		person.POST("/textResume/baseInfo/content", personHandler.BaseInfoContent)
+
+		person.POST("/textResume/education", personHandler.NewEducationInfo)
+		person.PUT("/textResume/education/:id", personHandler.UpdateEducationInfo)
+		person.DELETE("/textResume/education/:resumeId/:id", personHandler.DeleteEducationInfo)
+
+
+		person.POST("/textResume/work", personHandler.newWorkExperience)
+		person.PUT("/textResume/work/:id", personHandler.updateWorkExperience)
+		person.DELETE("/textResume/work/:resumeId/:id", personHandler.deleteWorkExperience)
+
+
+		person.POST("/textResume/project", personHandler.newProjectExperience)
+		person.PUT("/textResume/project/:id", personHandler.updateProjectExperience)
+		person.DELETE("/textResume/project/:resumeId/:id", personHandler.deleteProjectExperience)
+
+
+		person.POST("/textResume/college", personHandler.newCollegeActive)
+		person.PUT("/textResume/college/:id", personHandler.updateCollegeActive)
+		person.DELETE("/textResume/college/:resumeId/:id", personHandler.deleteCollegeActive)
+
+
+
+		person.POST("/textResume/skill", personHandler.newResumeSkill)
+		person.PUT("/textResume/skill/:id", personHandler.updateResumeSkill)
+		person.DELETE("/textResume/skill/:resumeId/:id", personHandler.deleteResumeSkill)
+
+		person.POST("/textResume/socialPractice", personHandler.newSocialPractice)
+		person.PUT("/textResume/socialPractice/:id", personHandler.updateSocialPractice)
+		person.DELETE("/textResume/socialPractice/:resumeId/:id", personHandler.deleteSocialPractice)
+
+
+		person.POST("/textResume/other", personHandler.newResumeOther)
+		person.PUT("/textResume/other/:id", personHandler.updateResumeOther)
+		person.DELETE("/textResume/other/:resumeId/:id", personHandler.deleteResumeOther)
+
+
+		//person.POST("/textResume/estimate", personHandler.newResumeEstimate)
+		person.PUT("/textResume/estimate/:id", personHandler.updateResumeEstimate)
+
+		person.GET("/attachResume/:resumeId", personHandler.attachResumeUrl)
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)

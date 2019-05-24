@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -15,6 +16,7 @@ const (
 	SEED_STR = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	SUCCESS  = "SUCCESS"
 	FAILED   = "FAILED"
+	RESUME_TIME_FORMAT = "2006-01"
 )
 
 // 加密密码
@@ -35,7 +37,7 @@ func JsonResponse(w http.ResponseWriter, data interface{}, code int) {
 	utils.JsonResponse(w, data, code)
 }
 
-func Struct2Map(i interface{}) *map[string]interface{} {
+func Struct2Map(i interface{}, ignore ...string) *map[string]interface{} {
 	var res = map[string]interface{}{}
 	v := reflect.Indirect(reflect.ValueOf(i))
 	if v.Kind() != reflect.Struct {
@@ -43,29 +45,34 @@ func Struct2Map(i interface{}) *map[string]interface{} {
 	}
 	t := v.Type()
 
+	// 忽略 ？？
 	// 嵌套不遍历
 	for i := 0; i < t.NumField(); i++ {
 
 		switch v.Field(i).Kind() {
 		case reflect.String:
-			if tag := t.Field(i).Tag.Get("json"); tag != "" {
+
+			if tag := strings.Split(t.Field(i).Tag.Get("json"),",")[0]; tag != "" {
 				res[tag] = v.Field(i).String()
 			}
 		case reflect.Bool:
-			if tag := t.Field(i).Tag.Get("json"); tag != "" {
+			if tag := strings.Split(t.Field(i).Tag.Get("json"),",")[0]; tag != "" {
 				res[tag] = v.Field(i).Bool()
 			}
 		case reflect.Float32, reflect.Float64:
-			if tag := t.Field(i).Tag.Get("json"); tag != "" {
+			if tag := strings.Split(t.Field(i).Tag.Get("json"),",")[0]; tag != "" {
 				res[tag] = v.Field(i).Float()
 			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			if tag := t.Field(i).Tag.Get("json"); tag != "" {
+			if tag := strings.Split(t.Field(i).Tag.Get("json"),",")[0]; tag != "" {
 				res[tag] = v.Field(i).Int()
 			}
+
 		}
 
 	}
 
 	return &res
 }
+
+

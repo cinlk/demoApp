@@ -20,6 +20,9 @@ func CreateTables() {
 	// 通知类型
 	_ = orm.DB.Exec("CREATE TYPE notify AS ENUM ('system', 'channel', 'special')").Error
 
+	// 简历类型
+	_ = orm.DB.Exec("CREATE TYPE resume AS ENUM ('text', 'attache')").Error
+
 	// create table
 	//orm.DB.SetLogger(gLog.GetLogUtil())
 	err := orm.DB.AutoMigrate(&dbModel.AppGuidanceItem{}, &dbModel.NewsModel{}, &dbModel.Account{}, &dbModel.Recruiter{},
@@ -36,7 +39,13 @@ func CreateTables() {
 		&dbModel.UserLikeReply{}, &dbModel.UserLikeSubReply{},
 		&dbModel.UserCollectedPost{}, &dbModel.UserAlertPost{},
 		&dbModel.UserAlertReply{}, &dbModel.UserAlertSubReply{},
-		&dbModel.UserDeliveryStatusHistory{}).Error
+		&dbModel.UserDeliveryStatusHistory{},
+		// 简历
+		&dbModel.MyResume{}, &dbModel.AttachFileResume{}, &dbModel.TextResume{}, &dbModel.TextResumeBaseInfo{},
+		&dbModel.TextResumeEducation{}, &dbModel.TextResumeWorkExperience{}, &dbModel.TextResumeProject{},
+		&dbModel.TextResumeCollegeActivity{}, &dbModel.TextResumeSocialPractice{}, &dbModel.TextResumeSkills{},
+		&dbModel.TextResumeOther{}, &dbModel.TextResumeEstimate{},
+	).Error
 
 	if err != nil {
 		gLog.LOG_PANIC(err)
@@ -253,6 +262,57 @@ func CreateTables() {
 	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
+	// 1 简历
+	err = orm.DB.Model(&dbModel.MyResume{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.AttachFileResume{}).AddForeignKey("resume_id", "my_resume(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.TextResume{}).AddForeignKey("resume_id", "my_resume(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+
+	err = orm.DB.Model(&dbModel.TextResumeEducation{}).AddForeignKey("resume_id", "text_resume(resume_id)", "CASCADE", "CASCADE").Error
+	if err != nil{
+		gLog.LOG_PANIC(err)
+	}
+
+	err = orm.DB.Model(&dbModel.TextResumeWorkExperience{}).AddForeignKey("resume_id", "text_resume(resume_id)", "CASCADE", "CASCADE").Error
+	if err != nil{
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.TextResumeProject{}).AddForeignKey("resume_id", "text_resume(resume_id)", "CASCADE", "CASCADE").Error
+	if err != nil{
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.TextResumeCollegeActivity{}).AddForeignKey("resume_id", "text_resume(resume_id)", "CASCADE", "CASCADE").Error
+	if err != nil{
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.TextResumeSocialPractice{}).AddForeignKey("resume_id", "text_resume(resume_id)", "CASCADE", "CASCADE").Error
+	if err != nil{
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.TextResumeSkills{}).AddForeignKey("resume_id", "text_resume(resume_id)", "CASCADE", "CASCADE").Error
+	if err != nil{
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.TextResumeOther{}).AddForeignKey("resume_id", "text_resume(resume_id)", "CASCADE", "CASCADE").Error
+	if err != nil{
+		gLog.LOG_PANIC(err)
+	}
+	err = orm.DB.Model(&dbModel.TextResumeEstimate{}).AddForeignKey("resume_id", "text_resume(resume_id)", "CASCADE", "CASCADE").Error
+	if err != nil{
+		gLog.LOG_PANIC(err)
+	}
+
+
 }
 
 func CloseDB() {
