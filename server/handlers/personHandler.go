@@ -123,21 +123,28 @@ type resumeEsitmateReq struct {
 	ResumeId string `json:"resume_id,omitempty"`
 	Content string `json:"content,omitempty"`
 }
-//
-//func (r resumeBaseInfoReq) toMap() map[string]interface{}  {
-//
-//	var m =  utils.Struct2Map(r)
-//
-//	for k,v := range *m {
-//		if c, ok := v.(string);ok{
-//			if c == ""{
-//				delete(*m,k)
-//			}
-//		}
-//	}
-//
-//	return *m
-//}
+
+type collectedJobReq struct {
+	Type string `json:"type"`
+	Offset int `json:"offset"`
+	Limit int  `json:"limit"`
+}
+
+type collectedReq struct {
+	Offset int `json:"offset"`
+	Limit int  `json:"limit"`
+}
+
+
+type unCollectedJobsReq struct {
+	Type string `json:"type"`
+	JobIds []string `json:"job_ids" binding:"required"`
+
+}
+
+type unCollectedTargetReq struct {
+	Ids []string `json:"ids"`
+}
 
 type personHandler struct {
 	baseHandler
@@ -925,3 +932,187 @@ func (p *personHandler) attachResumeUrl(w http.ResponseWriter, r *http.Request, 
 	}, http.StatusOK)
 
 }
+
+
+// 收藏
+
+func (p *personHandler) collectedJobs(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var req collectedJobReq
+	err := p.validate.Validate(r, &req)
+	if err != nil{
+		p.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	var res []httpModel.CollectedJobModel
+	switch req.Type {
+	case "intern":
+		res, err = p.db.CollectedInternJobs(userId,req.Offset, req.Limit)
+	case "graduate":
+		res, err = p.db.CollecteCampusJobs(userId, req.Offset, req.Limit)
+	default:
+		break
+	}
+
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, res, http.StatusOK)
+}
+
+
+func (p *personHandler) collectedCompany(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var req collectedReq
+	err := p.validate.Validate(r, &req)
+	if err != nil{
+		p.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	res, err := p.db.CollectedCompany(userId, req.Offset, req.Limit)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	p.JSON(w, res, http.StatusOK)
+}
+
+func (p *personHandler) collectedOnlineApply(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var req collectedReq
+	err := p.validate.Validate(r, &req)
+	if err != nil{
+		p.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	res, err := p.db.CollectedOnlineApply(userId, req.Offset, req.Limit)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	p.JSON(w, res, http.StatusOK)
+
+}
+
+func (p *personHandler) collectedCareerTalk(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var req collectedReq
+	err := p.validate.Validate(r, &req)
+	if err != nil{
+		p.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	res, err := p.db.CollectedCareerTalk(userId, req.Offset, req.Limit)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, res, http.StatusOK)
+
+
+}
+
+
+func (p *personHandler) unSubscribeCollectedJobs(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+
+	var userId = r.Header.Get(utils.USER_ID)
+	var req unCollectedJobsReq
+	err := p.validate.Validate(r, &req)
+	if err != nil{
+		p.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	if len(req.JobIds) ==  0 {
+		p.ERROR(w, errors.New("empty job list"), http.StatusBadRequest)
+		return
+	}
+
+	err = p.db.UnCollectedJobs(userId, req.Type, req.JobIds)
+	if err != nil{
+		p.ERROR(w,err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, httpModel.HttpResultModel{
+		Result:"success",
+	}, http.StatusAccepted)
+}
+
+
+func (p *personHandler) unSubScribeCollectedCompany(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+
+	var userId = r.Header.Get(utils.USER_ID)
+	var req unCollectedTargetReq
+	err := p.validate.Validate(r, &req)
+	if err != nil{
+		p.ERROR(w, err ,http.StatusBadRequest)
+		return
+	}
+
+	err = p.db.UnCollectedCompany(userId, req.Ids)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusOK)
+}
+
+
+func (p *personHandler) unSubScribeCollectedCareerTalk(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var req unCollectedTargetReq
+	err := p.validate.Validate(r, &req)
+	if err != nil{
+		p.ERROR(w, err ,http.StatusBadRequest)
+		return
+	}
+
+	err = p.db.UnCollectedCareerTalk(userId, req.Ids)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusOK)
+}
+
+func (p *personHandler) unSubScribeCollectedOnlineApply(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var req unCollectedTargetReq
+	err := p.validate.Validate(r, &req)
+	if err != nil{
+		p.ERROR(w, err ,http.StatusBadRequest)
+		return
+	}
+
+	err = p.db.UnCollectedOnlineApply(userId, req.Ids)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusOK)
+}
+
+
+//func (p *personHandler) collectedPost(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+//	var userId = r.Header.Get(utils.USER_ID)
+//	var req collectedReq
+//	err := p.validate.Validate(r, &req)
+//	if err != nil{
+//		p.ERROR(w, err, http.StatusBadRequest)
+//		return
+//	}
+//}
+

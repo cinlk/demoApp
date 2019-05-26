@@ -10,7 +10,7 @@ type JobType string
 
 func (t JobType) Validate() bool {
 	switch t {
-	case intern, graduate, onlineApply:
+	case InternType, GraduateType, OnlineApplyType:
 		return true
 	default:
 		return false
@@ -18,9 +18,9 @@ func (t JobType) Validate() bool {
 }
 
 const (
-	intern      JobType = "intern"
-	graduate    JobType = "graduate"
-	onlineApply JobType = "onlineApply"
+	InternType      JobType = "intern"
+	GraduateType    JobType = "graduate"
+	OnlineApplyType JobType = "onlineApply"
 	All         JobType = "all"
 )
 

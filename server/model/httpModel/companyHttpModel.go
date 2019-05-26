@@ -6,6 +6,7 @@ type HttpCompanyModel struct {
 	Id            string         `json:"id"`
 	Link          string         `json:"link,omitempty"`
 	Name          string         `json:"name,omitempty"`
+	Type 		  string         `json:"type,omitempty"`
 	IconURL       string         `json:"icon_url,omitempty"`
 	CreatedTime   tString        `json:"created_time"`
 	Describe      string         `json:"describe"`

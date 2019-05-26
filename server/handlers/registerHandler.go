@@ -303,11 +303,15 @@ func RegisterRouter(router *httprouter.Router) {
 		recruit.POST("/intern", recruitHandler.internjobs)
 		recruit.GET("/online/:id", recruitHandler.findOnlineApply)
 		recruit.PUT("/online/:onlineId/:positionId", recruitHandler.applyOnlineJob)
+		recruit.POST("/online/collect", recruitHandler.collectOnlineApply)
 		recruit.GET("/meeting/:id", recruitHandler.findCareerTalk)
+		recruit.POST("/meeting/collect", recruitHandler.collecteCareerTalk)
 		recruit.GET("/company/:id", recruitHandler.findCompany)
+		recruit.POST("/company/collect", recruitHandler.collectCompany)
 		recruit.GET("/graduate/:id", recruitHandler.findGraduate)
 		recruit.PUT("/job/:type/:jobId", recruitHandler.applyJob)
 		recruit.GET("/intern/:id", recruitHandler.findInternJob)
+		recruit.POST("/job/collect", recruitHandler.collectJob)
 		recruit.GET("/recruiter/:id", recruitHandler.recruiterCompanyAndJobs)
 		recruit.POST("/tag/jobs", recruitHandler.companyTagJobs)
 		recruit.POST("/company/recruit/meeting", recruitHandler.companyRecruitMeeting)
@@ -399,8 +403,6 @@ func RegisterRouter(router *httprouter.Router) {
 		person.PUT("/textResume/college/:id", personHandler.updateCollegeActive)
 		person.DELETE("/textResume/college/:resumeId/:id", personHandler.deleteCollegeActive)
 
-
-
 		person.POST("/textResume/skill", personHandler.newResumeSkill)
 		person.PUT("/textResume/skill/:id", personHandler.updateResumeSkill)
 		person.DELETE("/textResume/skill/:resumeId/:id", personHandler.deleteResumeSkill)
@@ -409,16 +411,26 @@ func RegisterRouter(router *httprouter.Router) {
 		person.PUT("/textResume/socialPractice/:id", personHandler.updateSocialPractice)
 		person.DELETE("/textResume/socialPractice/:resumeId/:id", personHandler.deleteSocialPractice)
 
-
 		person.POST("/textResume/other", personHandler.newResumeOther)
 		person.PUT("/textResume/other/:id", personHandler.updateResumeOther)
 		person.DELETE("/textResume/other/:resumeId/:id", personHandler.deleteResumeOther)
-
 
 		//person.POST("/textResume/estimate", personHandler.newResumeEstimate)
 		person.PUT("/textResume/estimate/:id", personHandler.updateResumeEstimate)
 
 		person.GET("/attachResume/:resumeId", personHandler.attachResumeUrl)
+
+		person.POST("/collect/jobs", personHandler.collectedJobs)
+		person.POST("/collect/careerTalk", personHandler.collectedCareerTalk)
+		person.POST("/collect/onlineApply", personHandler.collectedOnlineApply)
+		person.POST("/collect/company", personHandler.collectedCompany)
+
+		person.POST("/unCollect/jobs", personHandler.unSubscribeCollectedJobs)
+		person.POST("/unCollect/company", personHandler.unSubScribeCollectedCompany)
+		person.POST("/unCollect/onlineApply", personHandler.unSubScribeCollectedOnlineApply)
+		person.POST("/unCollect/careerTalk", personHandler.unSubScribeCollectedCareerTalk)
+
+
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)

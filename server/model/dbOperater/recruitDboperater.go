@@ -4,6 +4,7 @@ import (
 	"demoApp/server/model/dbModel"
 	"demoApp/server/model/httpModel"
 	"demoApp/server/utils"
+	"demoApp/server/utils/errorStatus"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -402,7 +403,7 @@ func (r *RecruiteDboperator) CompanyInfo(id, userID string) httpModel.HttpCompan
 	// 宣讲信息
 	// 用户关联信息
 	_ = r.orm.Model(&dbModel.Company{}).Where("id = ?", id).Select("id, name, link, " +
-		"icon_url, created_time, describe, simple_describe as simple_des, citys, total_staff as staff, business_field," +
+		"icon_url, created_time, describe, simple_describe as simple_des, citys,  type, total_staff as staff, business_field," +
 		" feature_tags as tags, review_counts,job_tags").Scan(&res)
 	//_ = r.orm.Model(&dbModel.InternJobs{}).Where("company_id = ?", id).Select("").Scan(&res.Jobs)
 
@@ -423,7 +424,7 @@ func (r *RecruiteDboperator) RecruitMeetingInfo(id, userID string) httpModel.Htt
 	// 关联的用户投递信息
 	_ = r.orm.Model(&dbModel.CareerTalk{}).Where("id = ?", id).
 		Select("id, name, is_validate, created_time, icon_url, college, address, simplify_address," +
-			"start_time, end_time, content, content_type, link, majors, business_field, reference, company_id").Scan(&res)
+			"start_time, end_time, city, content, content_type, link, majors, business_field, reference, company_id").Scan(&res)
 	_ = r.orm.Model(&dbModel.Company{}).Where("id = ?", res.CompanyID).
 		Select("id as company_id, icon_url, name as company_name, " +
 			"citys, business_field, total_staff as staff").Scan(&res.Company)
@@ -486,6 +487,68 @@ func (r *RecruiteDboperator) CompanyRelatedCareerTalk(id string, offset, limit i
 	return res
 
 }
+
+
+// 收藏 (assgin 结构体用0值或false 不生效, 改成map方式 )
+func (r *RecruiteDboperator) CollectedOnlineApply(userId, applyId string, flag bool) error  {
+
+	fmt.Println(flag)
+
+	return  r.orm.Where("user_id = ? and online_apply_id = ?", userId, applyId).
+		Assign(map[string]interface{}{
+			"is_collected": flag,
+	}).FirstOrCreate(&dbModel.UserCollectedOnlineApply{
+		UserId: userId,
+		OnlineApplyID: applyId,
+		IsCollected: flag,
+	}).Error
+}
+
+func (r *RecruiteDboperator) CollectedCarrerTalk(userId, meetingId string, flag bool) error  {
+	return r.orm.Where("user_id = ? and career_talk_id = ?", userId, meetingId).
+		Assign(map[string]interface{}{
+		"is_collected": flag,
+		}).FirstOrCreate(&dbModel.UserApplyCarrerTalk{
+		UserId: userId,
+		CareerTalkID: meetingId,
+		IsCollected: flag,
+	}).Error
+}
+
+
+func (r *RecruiteDboperator) CollectCompany(userId, companyId string, flag bool) error {
+	return r.orm.Where("user_id = ? and company_id = ?", userId, companyId).
+		Assign(map[string]interface{}{
+		"is_collected": flag,
+		}).FirstOrCreate(&dbModel.UserCompanyRelate{
+		UserID: userId,
+		CompanyID: companyId,
+		IsCollected: flag,
+	}).Error
+}
+
+
+func (r *RecruiteDboperator) CollectJob(userId, jobId, t string, flag bool) error {
+	switch dbModel.JobType(t) {
+	case dbModel.InternType, dbModel.GraduateType:
+		return r.orm.Where("user_id = ? and job_id = ? and job_type = ?", userId, jobId,t).
+			Assign(map[string]interface{}{
+			"is_collected": flag,
+			}).FirstOrCreate(&dbModel.UserApplyJobs{
+			JobId: jobId,
+			UserId: userId,
+			JobType: dbModel.JobType(t),
+		}).Error
+	default:
+		return &errorStatus.AppError{
+			Err: errors.New("unkown type"),
+			Code: 200,
+		}
+	}
+
+
+}
+
 
 // 拼接数据
 func (r *RecruiteDboperator) joinListSql(l []string) string {

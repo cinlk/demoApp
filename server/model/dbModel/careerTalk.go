@@ -44,7 +44,7 @@ type CareerTalk struct {
 	//UserCarrerTalk []UserApplyCarrerTalk `gorm:"ForeignKey:CarrerTalkID;AssociationForeignKey:CarrerTalkID" json:"users_talks"`
 }
 
-//
+//  表名字 修改?
 type UserApplyCarrerTalk struct {
 	gorm.Model   `json:"-"`
 	UserId       string `gorm:"ForeignKey:UserId;not null" json:"user_id"`
@@ -52,3 +52,4 @@ type UserApplyCarrerTalk struct {
 	IsCollected  bool   `gorm:"default:false" json:"is_collected"`
 	//IsApply      bool   `gorm:"default:false" json:"is_apply"`
 }
+

@@ -38,6 +38,7 @@ type HttpCareerTalkModel struct {
 	StartTime       tString                `json:"start_time,omitempty"`
 	EndTime         tString                `json:"end_time,omitempty"`
 	Content         string                 `json:"content"`
+	City 			string 				   `json:"city"`
 	ContentType     string                 `json:"content_type"`
 	Majors          pq.StringArray         `json:"majors,omitempty"`
 	BusinessField   pq.StringArray         `json:"business_field,omitempty"`

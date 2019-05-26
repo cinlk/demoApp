@@ -842,6 +842,155 @@ func (p *PersonDbOperator) AttachResume(resumeId string) (string, error) {
 }
 
 
+
+func (p *PersonDbOperator) CollectedInternJobs(userId string, offset, limit int) ([]httpModel.CollectedJobModel, error) {
+
+	var res []httpModel.CollectedJobModel
+	err := p.orm.Model(&dbModel.UserApplyJobs{}).Joins("left join  intern_jobs on user_apply_jobs.job_id = intern_jobs.id").
+		Where("user_apply_jobs.user_id = ? and user_apply_jobs.job_type = ? and user_apply_jobs.is_collected = ?",
+		userId, dbModel.InternType, true).Select("user_apply_jobs.job_id, intern_jobs.icon_url, intern_jobs.name," +
+			"intern_jobs.created_time, intern_jobs.company_id").
+		Limit(limit).Offset(offset).Order("user_apply_jobs.created_at").
+		Scan(&res).Error
+
+	for i:=0; i< len(res); i++{
+
+		p.orm.Model(&dbModel.Company{}).Where("id = ?", res[i].CompanyId).Select("name as company_name").Scan(&res[i])
+	}
+
+	return res, err
+
+}
+
+func (p *PersonDbOperator) CollecteCampusJobs(userId string, offset, limit int) ([]httpModel.CollectedJobModel, error){
+
+	var res []httpModel.CollectedJobModel
+	err := p.orm.Model(&dbModel.UserApplyJobs{}).Joins("left join  compuse_jobs on user_apply_jobs.job_id = compuse_jobs.id").
+		Where("user_apply_jobs.user_id = ? and user_apply_jobs.job_type = ? and user_apply_jobs.is_collected = ?",
+			userId, dbModel.GraduateType, true).Select("user_apply_jobs.job_id, compuse_jobs.icon_url, compuse_jobs.name," +
+		"compuse_jobs.created_time, compuse_jobs.company_id").
+		Limit(limit).Offset(offset).Order("user_apply_jobs.created_at").
+		Scan(&res).Error
+
+	for i:=0; i< len(res); i++{
+
+		p.orm.Model(&dbModel.Company{}).Where("id = ?", res[i].CompanyId).Select("name as company_name").Scan(&res[i])
+	}
+
+	return res, err
+
+
+}
+
+
+func (p *PersonDbOperator) CollectedCompany(userId string, offset, limit int)([]httpModel.CollectedCompanyModel, error){
+
+
+	// 用原来的table 名称 postgres 会报错, 使用表的别名
+	var res []httpModel.CollectedCompanyModel
+	err := p.orm.Table("user_company_relate as uc").
+		Joins("inner join company on  company.id = uc.company_id").
+		Where("uc.user_id = ? and uc.is_collected = ?", userId, true).
+		Select("uc.company_id, uc.created_at as created_time, " +
+			"company.name, company.type, company.citys, company.icon_url").Offset(offset).Limit(limit).
+		Order("uc.created_at").Scan(&res).Error
+
+	return res, err
+
+}
+
+func (p *PersonDbOperator) CollectedCareerTalk(userId string, offset, limit int) ([]httpModel.CollectedCareerTalkModel, error){
+	var res []httpModel.CollectedCareerTalkModel
+
+	err := p.orm.Table("user_apply_carrer_talk as ua").
+		Joins("inner join career_talk on ua.career_talk_id = career_talk.id").
+		Where("ua.user_id = ? and ua.is_collected = ?", userId, true).
+		Select("ua.career_talk_id as meeting_id, career_talk.icon_url as college_icon_url, " +
+			"career_talk.name, career_talk.college, career_talk.simplify_address, career_talk.company_id").
+		Limit(limit).Offset(offset).Order("ua.created_at").
+		Scan(&res).Error
+
+	for i:=0; i< len(res); i++{
+
+		p.orm.Model(&dbModel.Company{}).Where("id = ?", res[i].CompanyId).Select("name as company_name").Scan(&res[i])
+	}
+
+
+
+	return res ,err
+}
+
+func (p *PersonDbOperator) CollectedOnlineApply(userId string, offset, limit int) ([]httpModel.CollectedOnlineApplyModel, error){
+
+	var res []httpModel.CollectedOnlineApplyModel
+	err := p.orm.Model(&dbModel.UserCollectedOnlineApply{}).
+		Joins("inner join online_apply on online_apply.id = user_collected_online_apply.online_apply_id").
+		Where("user_collected_online_apply.user_id = ? and user_collected_online_apply.is_collected = ?", userId, true).
+		Select("user_collected_online_apply.online_apply_id, user_collected_online_apply.created_at as created_time, " +
+			"online_apply.name, online_apply.icon_url,online_apply.company_id").
+		Offset(offset).
+		Limit(limit).
+		Order("user_collected_online_apply.created_at").Scan(&res).Error
+
+	// 获取职位
+	for i:=0; i< len(res); i++{
+		var name []struct{
+			Name string
+		}
+		p.orm.Model(&dbModel.OnlineApplyPosition{}).
+			Where("online_apply_id = ?", res[i].OnlineApplyId).Select("name").Scan(&name)
+		for _, n := range name{
+			res[i].Positions = append(res[i].Positions, n.Name)
+		}
+	}
+
+	// 获取公司名称
+	for i:=0; i< len(res); i++{
+
+		p.orm.Model(&dbModel.Company{}).Where("id = ?", res[i].CompanyId).Select("name as company_name").Scan(&res[i])
+	}
+
+	return res, err
+}
+
+
+func (p *PersonDbOperator) UnCollectedJobs(userId, kind string,  ids []string) error{
+
+	var t = dbModel.JobType(kind)
+	var err error
+	switch t {
+	case dbModel.InternType:
+		err = p.orm.Model(&dbModel.UserApplyJobs{}).
+			Where("user_id = ? and job_type = ?  and job_id in (?)", userId, kind, ids).
+			Update("is_collected", false).Error
+	case dbModel.GraduateType:
+		err = p.orm.Model(&dbModel.UserApplyJobs{}).
+			Where("user_id = ? and job_type = ?  and job_id in (?)", userId, kind, ids).
+			Update("is_collected", false).Error
+	}
+
+	return err
+
+}
+
+func (p *PersonDbOperator) UnCollectedCompany(userId string, ids []string) error {
+
+	return  p.orm.Model(&dbModel.UserCompanyRelate{}).
+		Where("user_id = ? and company_id in (?)", userId, ids).
+		Update("is_collected", false).Error
+}
+
+func (p *PersonDbOperator) UnCollectedCareerTalk(userId string, ids []string) error {
+	return  p.orm.Model(&dbModel.UserApplyCarrerTalk{}).
+		Where("user_id = ? and career_talk_id in (?)", userId, ids).
+		Update("is_collected", false).Error
+}
+
+func (p *PersonDbOperator) UnCollectedOnlineApply(userId string, ids []string) error {
+	return  p.orm.Model(&dbModel.UserCollectedOnlineApply{}).
+		Where("user_id = ? and online_apply_id in (?)", userId, ids).
+		Update("is_collected", false).Error
+}
 //func (p *PersonDbOperator) DeleteResumeEstimate(id, resumeId string) error{
 //	return p.orm.Unscoped().
 //		Delete(&dbModel.TextResumeEstimate{}, "id = ? and resume_id = ?", id, resumeId).Error

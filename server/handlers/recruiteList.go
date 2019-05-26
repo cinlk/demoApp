@@ -59,6 +59,29 @@ type companyRecruitMeeting struct {
 	CompanyID string `json:"company_id" binding:"required"`
 }
 
+
+type collecteOnlineReq struct {
+	OnlineApplyId string `json:"online_apply_id"`
+	Flag bool `json:"flag"`
+}
+
+type collecteCareerTalkReq struct {
+	CareerTalkId string  `json:"career_talk_id"`
+	Flag bool `json:"flag"`
+}
+
+
+type collecteCompanyReq struct {
+	CompanyId string  `json:"company_id"`
+	Flag bool `json:"flag"`
+}
+
+type collecteJobReq struct {
+	JobId string  `json:"job_id"`
+	Flag bool `json:"flag"`
+	Type string `json:"type"`
+}
+
 type recruiteListHandle struct {
 	baseHandler
 	UrlPrefix  string
@@ -89,6 +112,27 @@ func (re *recruiteListHandle) findOnlineApply(w http.ResponseWriter, r *http.Req
 	res := re.dbOperator.OnlineApplyInfo(id, userId)
 
 	re.JSON(w, res, http.StatusOK)
+}
+
+// 收藏网申职位
+func (re *recruiteListHandle) collectOnlineApply(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var req collecteOnlineReq
+	err := re.validate.Validate(r, &req)
+	if err != nil{
+		re.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	err = re.dbOperator.CollectedOnlineApply(userId, req.OnlineApplyId, req.Flag)
+	if err != nil{
+		re.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	re.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusAccepted)
+
 }
 
 // 申请网申职位
@@ -140,6 +184,26 @@ func (re *recruiteListHandle) findCareerTalk(w http.ResponseWriter, r *http.Requ
 
 }
 
+func (re *recruiteListHandle) collecteCareerTalk(w http.ResponseWriter, r *http.Request, param httprouter.Params)  {
+	var userId = r.Header.Get(utils.USER_ID)
+	var req collecteCareerTalkReq
+	err := re.validate.Validate(r, &req)
+	if err != nil{
+		re.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = re.dbOperator.CollectedCarrerTalk(userId, req.CareerTalkId, req.Flag)
+	if err != nil{
+		re.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	re.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusAccepted)
+}
+
 func (re *recruiteListHandle) companys(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	var req companyQueryPage
@@ -167,6 +231,28 @@ func (re *recruiteListHandle) findCompany(w http.ResponseWriter, r *http.Request
 
 	re.JSON(w, res, http.StatusOK)
 }
+
+func (re *recruiteListHandle) collectCompany(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var req collecteCompanyReq
+	err := re.validate.Validate(r, &req)
+	if err != nil{
+		re.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = re.dbOperator.CollectCompany(userId, req.CompanyId, req.Flag)
+	if err != nil{
+		re.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	re.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusAccepted)
+
+}
+
 
 func (re *recruiteListHandle) graduatejobs(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var req graduateQueryPage
@@ -239,6 +325,30 @@ func (re *recruiteListHandle) applyJob(w http.ResponseWriter, r *http.Request, p
 	}, http.StatusCreated)
 }
 
+
+// 收藏职位
+func (re *recruiteListHandle) collectJob(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var req collecteJobReq
+	err := re.validate.Validate(r, &req)
+	if err != nil{
+		re.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = re.dbOperator.CollectJob(userId, req.JobId, req.Type, req.Flag)
+	if err != nil{
+		re.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	re.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusOK)
+}
+
+
+
 // 根据招聘者信息 查找他所在的公司和发布的职位
 func (re *recruiteListHandle) recruiterCompanyAndJobs(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
 
@@ -280,3 +390,5 @@ func (re *recruiteListHandle) companyRecruitMeeting(w http.ResponseWriter, r *ht
 	re.JSON(w, res, http.StatusOK)
 
 }
+
+

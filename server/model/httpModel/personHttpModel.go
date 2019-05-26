@@ -133,3 +133,46 @@ type TextResumeContentModel struct {
 	SelfEstimate textResumeEstimate `json:"self_estimate"`
 }
 
+
+type CollectedJobModel struct {
+
+	JobId string `json:"job_id"`
+	CompanyId string `json:"-"`
+	IconURL string `json:"icon_url"`
+	CompanyName string `json:"company_name"`
+	Name string `json:"name"`
+	CreatedTime tString `json:"created_time"`
+}
+
+
+type CollectedCompanyModel struct {
+	CompanyId string `json:"company_id"`
+	IconURL   string `json:"icon_url"`
+	Name  	  string `json:"name"`
+	Type	  string `json:"type"`
+	Citys	  pq.StringArray `json:"citys"`
+	CreatedTime tString `json:"created_time"`
+}
+
+type CollectedCareerTalkModel struct {
+	MeetingId string `json:"meeting_id"`
+	CollegeIconUrl string `json:"college_icon_url"`
+	CompanyId string `json:"-"`
+	CompanyName string `json:"company_name"`
+	Name string `json:"name"`
+	College string `json:"college"`
+	SimplifyAddress string `json:"simplify_address"`
+	//CreatedTime tString `json:"created_time"`
+}
+
+type CollectedOnlineApplyModel struct {
+	OnlineApplyId string `json:"online_apply_id"`
+	IconURL string `json:"icon_url"`
+	CompanyId string `json:"-"`
+	CompanyName string `json:"company_name"`
+	Name string `json:"name"`
+	Positions []string `json:"positions"`
+	CreatedTime tString `json:"created_time"`
+	
+}
+
