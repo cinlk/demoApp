@@ -146,6 +146,12 @@ type unCollectedTargetReq struct {
 	Ids []string `json:"ids"`
 }
 
+
+type renamePostGroupNameReq struct {
+	GroupId string `json:"group_id" binding:"required"`
+	NewName string `json:"new_name" binding:"required"`
+}
+
 type personHandler struct {
 	baseHandler
 	UrlPrefix string
@@ -1016,6 +1022,17 @@ func (p *personHandler) collectedCareerTalk(w http.ResponseWriter, r *http.Reque
 
 }
 
+func (p *personHandler) collectedPost(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+
+	res, err := p.db.CollectedPost(userId)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	p.JSON(w, res, http.StatusOK)
+}
+
 
 func (p *personHandler) unSubscribeCollectedJobs(w http.ResponseWriter, r *http.Request, param httprouter.Params){
 
@@ -1106,13 +1123,45 @@ func (p *personHandler) unSubScribeCollectedOnlineApply(w http.ResponseWriter, r
 }
 
 
-//func (p *personHandler) collectedPost(w http.ResponseWriter, r *http.Request, param httprouter.Params){
-//	var userId = r.Header.Get(utils.USER_ID)
-//	var req collectedReq
-//	err := p.validate.Validate(r, &req)
-//	if err != nil{
-//		p.ERROR(w, err, http.StatusBadRequest)
-//		return
-//	}
-//}
 
+
+
+func (p *personHandler) removePostGroup(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var name = param.ByName("name")
+
+	err := p.db.RemovePostGroup(userId, name)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusAccepted)
+}
+
+
+
+func (p *personHandler) renamePostGroup(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var req renamePostGroupNameReq
+
+	err := p.validate.Validate(r, &req)
+	if err != nil{
+		p.ERROR(w, err ,http.StatusBadRequest)
+		return
+	}
+
+	err = p.db.RenamePostGroup(userId, req.GroupId, req.NewName)
+	if err != nil{
+		p.ERROR(w, err ,http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusAccepted)
+
+
+}

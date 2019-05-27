@@ -52,7 +52,8 @@ func (s *searchHandler) searchKeyword(w http.ResponseWriter, r *http.Request, _ 
 	}
 
 	for i := 0; i < 10; i++ {
-		res.Words = append(res.Words, req.Word+strconv.Itoa(i))
+		//res.Words = append(res.Words, "定位" + string.r)
+		res.Words = append(res.Words, req.Word+strconv.Itoa(i) )
 	}
 	s.JSON(w, res, http.StatusOK)
 

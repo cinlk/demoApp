@@ -2,6 +2,7 @@ package dbOperater
 
 import (
 	"demoApp/server/model/dbModel"
+	"demoApp/server/model/httpModel"
 	"github.com/jinzhu/gorm"
 	"goframework/orm"
 )
@@ -22,6 +23,21 @@ func (a *AppDBoperator) News(t string, offset int) (res []dbModel.NewsModel) {
 	_ = a.orm.Model(&dbModel.NewsModel{}).Offset(offset).Limit(10).Find(&res)
 
 	return
+}
+
+func (a *AppDBoperator) UserRelatedPostGroup(userId string) ([]httpModel.UserPostGroups, error) {
+
+	var res []httpModel.UserPostGroups
+
+
+	err := a.orm.Model(&dbModel.UserCollectedGroup{}).Where("user_id = ?", userId).
+		Select("group_name as name, id as group_id ").Order("created_at desc").
+		Scan(&res).Error
+
+	//for _, i := range  name{
+	//	res.Name = append(res.Name, i.Name)
+	//}
+	return res, err
 }
 
 func NewAppDBoperator() *AppDBoperator {

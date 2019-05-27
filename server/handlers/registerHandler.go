@@ -227,6 +227,7 @@ func RegisterRouter(router *httprouter.Router) {
 		global.GET("/advise/image", apphandler.AppAdvitiseImageURL)
 		global.POST("/news", apphandler.News)
 		global.GET("/citys", apphandler.Citys)
+		global.GET("/postGroups", apphandler.userPostGroups, middleware.AuthorizationVerify)
 		global.GET("/business/field", apphandler.BusinessField)
 		global.GET("/subBusiness/field", apphandler.BusinessFieldJob)
 		global.GET("/company/type", apphandler.CompanyType)
@@ -339,6 +340,7 @@ func RegisterRouter(router *httprouter.Router) {
 	forum := rg.NewGroupRouter(forumHandler.urlPrefix, router)
 	{
 		forum.POST("/articles", forumHandler.SectionArticles, middleware.FetchUserId)
+		forum.GET("/one/article/:postId", forumHandler.oneArticle, middleware.FetchUserId)
 		forum.POST("/new/article", forumHandler.NewArticle, middleware.AuthorizationVerify)
 		forum.PUT("/article/count/:postId", forumHandler.ReadPostCount)
 		// 获取所有子回复
@@ -346,6 +348,8 @@ func RegisterRouter(router *httprouter.Router) {
 		forum.PUT("/article/like", forumHandler.LikePost, middleware.AuthorizationVerify)
 		forum.PUT("/reply/like", forumHandler.UserLikeReply, middleware.AuthorizationVerify)
 		forum.PUT("/article/collect", forumHandler.CollectedPost, middleware.AuthorizationVerify)
+		// 收藏分组管理
+
 		forum.POST("/article/alert", forumHandler.AlertPost, middleware.AuthorizationVerify)
 		// 发布回复
 		forum.POST("/article/reply", forumHandler.UserReplyPost, middleware.AuthorizationVerify)
@@ -361,6 +365,10 @@ func RegisterRouter(router *httprouter.Router) {
 
 		// 搜索帖子
 		forum.POST("/search", forumHandler.SearchForumPost, middleware.FetchUserId)
+		// 更新帖子的分组
+		forum.POST("/article/groups", forumHandler.postNewGroupName, middleware.AuthorizationVerify)
+		// 获取某个帖子的分组
+		forum.GET("/article/groups/:postId", forumHandler.postGroupName, middleware.AuthorizationVerify)
 
 	}
 
@@ -424,12 +432,15 @@ func RegisterRouter(router *httprouter.Router) {
 		person.POST("/collect/careerTalk", personHandler.collectedCareerTalk)
 		person.POST("/collect/onlineApply", personHandler.collectedOnlineApply)
 		person.POST("/collect/company", personHandler.collectedCompany)
+		person.GET("/collect/post", personHandler.collectedPost)
 
 		person.POST("/unCollect/jobs", personHandler.unSubscribeCollectedJobs)
 		person.POST("/unCollect/company", personHandler.unSubScribeCollectedCompany)
 		person.POST("/unCollect/onlineApply", personHandler.unSubScribeCollectedOnlineApply)
 		person.POST("/unCollect/careerTalk", personHandler.unSubScribeCollectedCareerTalk)
 
+		person.DELETE("/post/group/:name", personHandler.removePostGroup)
+		person.PUT("/post/group/name", personHandler.renamePostGroup)
 
 	}
 

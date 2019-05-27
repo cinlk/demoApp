@@ -33,7 +33,7 @@ func CreateTables() {
 		&dbModel.UserOnlineApplyPosition{}, &dbModel.OnlineApplyPosition{}, &dbModel.UserCollectedOnlineApply{},
 		&dbModel.UserCompanyRelate{}, &dbModel.LeanCloudAccount{},
 		&dbModel.SingleConversation{}, &dbModel.SystemMessage{}, &dbModel.UserCheckSystemMessage{},
-		&dbModel.NotifyMessage{}, &dbModel.ForumReplyMyTime{},
+		&dbModel.NotifyMessage{}, &dbModel.ForumReplyMyTime{}, &dbModel.UserCollectedGroup{},
 		&dbModel.ForumThumbUpTime{}, &dbModel.ForumArticle{}, &dbModel.ForumHotestArticle{},
 		&dbModel.ReplyForumPost{}, &dbModel.SecondReplyPost{}, &dbModel.UserLikePost{},
 		&dbModel.UserLikeReply{}, &dbModel.UserLikeSubReply{},

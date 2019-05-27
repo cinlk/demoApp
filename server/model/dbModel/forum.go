@@ -86,6 +86,8 @@ type UserCollectedPost struct {
 	gorm.Model `json:"-"`
 	UserId     string `gorm:"not null" json:"user_id"`
 	PostUuid   string `gorm:"not null" json:"post_uuid"`
+	Groups      []UserCollectedGroup `gorm:"many2many:post_group" json:"group"`
+	
 }
 
 // 用户举报的帖子
@@ -111,3 +113,16 @@ type UserAlertSubReply struct {
 	Content       string `json:"content"`
 	SecondReplyId string `gorm:"not null" json:"second_reply_id"`
 }
+
+
+// 用户收藏的帖子分组 (默认分组)
+type UserCollectedGroup struct {
+	gorm.Model `json:"-"`
+	GroupName string `json:"group_name"`
+	UserId string `json:"user_id"`
+	Posts []UserCollectedPost `gorm:"many2many:post_group" json:"posts"`
+}
+
+ 
+
+

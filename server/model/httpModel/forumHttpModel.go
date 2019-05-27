@@ -16,6 +16,9 @@ type HttpForumHttpModel struct {
 	// 自己是否收藏 和 点赞
 	IsCollected bool `json:"is_collected"`
 	IsLike      bool `json:"is_like"`
+
+	// 帖子的分组
+	UserGroup  []string `json:"user_group"`
 }
 
 type HttpForumResponse struct {
@@ -52,4 +55,15 @@ type HttpSecondReplyInfo struct {
 	ToHost         bool    `json:"to_host"`
 
 	HostUserId string `json:"-"`
+}
+
+// 用户所有的帖子分组
+type UserPostGroups struct {
+	Name string `json:"name"`
+	GroupId  string `json:"group_id"`
+}
+
+// 某个帖子的分组
+type PostGroups struct {
+	Name []string `json:"group"`
 }

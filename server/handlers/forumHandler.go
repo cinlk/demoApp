@@ -91,6 +91,15 @@ type forumHandler struct {
 	dbOperator *dbOperater.ForumDboperator
 }
 
+
+// 帖子分组
+type  forumGroupNameReq struct {
+
+	PostId string `json:"post_id" binding:"required"`
+	GroupName []string `json:"group_name"`
+
+}
+
 // 获取帖子数据
 func (f *forumHandler) SectionArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var req forumSectionItemReq
@@ -110,6 +119,20 @@ func (f *forumHandler) SectionArticles(w http.ResponseWriter, r *http.Request, _
 	}
 
 	f.JSON(w, res, http.StatusOK)
+}
+
+func (f *forumHandler) oneArticle(w http.ResponseWriter, r *http.Request, param httprouter.Params)  {
+	var userId = r.Header.Get(utils.USER_ID)
+	var postId = param.ByName("postId")
+
+	res, err := f.dbOperator.FindArticleBy(userId, postId)
+	if err != nil{
+		f.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	f.JSON(w, res, http.StatusOK)
+
+
 }
 
 // 发布帖子
@@ -273,6 +296,11 @@ func (f *forumHandler) LikePost(w http.ResponseWriter, r *http.Request, para htt
 
 }
 
+// 帖子加入分组
+func (f *forumHandler) CollectedPostInGroup(w http.ResponseWriter, r *http.Request, para httprouter.Params){
+
+}
+
 // 帖子收藏
 func (f *forumHandler) CollectedPost(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
 	var req forumArticleLike
@@ -288,6 +316,8 @@ func (f *forumHandler) CollectedPost(w http.ResponseWriter, r *http.Request, par
 		f.ERROR(w, err, http.StatusUnprocessableEntity)
 		return
 	}
+
+
 	//w.WriteHeader(http.StatusAccepted)
 	f.JSON(w, httpModel.HttpForumResponse{
 		httpModel.HttpResultModel{
@@ -449,6 +479,42 @@ func (f *forumHandler) SearchForumPost(w http.ResponseWriter, r *http.Request, _
 	}
 	res, err := f.dbOperator.SearchPostBy(req.Word, userId, req.Offset, req.Limit)
 	if err != nil {
+		f.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	f.JSON(w, res, http.StatusOK)
+
+}
+
+
+func (f *forumHandler) postNewGroupName(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
+	var req forumGroupNameReq
+	var userId = r.Header.Get(utils.USER_ID)
+	err := f.validate.Validate(r, &req)
+	if err != nil {
+		f.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = f.dbOperator.RelatePostGroupName(userId, req.PostId, req.GroupName)
+	if err != nil{
+		f.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	f.JSON(w, httpModel.HttpResultModel{
+		Result:"success",
+	}, http.StatusCreated)
+
+}
+
+func (f *forumHandler) postGroupName(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var postId = param.ByName("postId")
+
+	res, err := f.dbOperator.PostGroupNames(userId, postId)
+	if err != nil{
 		f.ERROR(w, err, http.StatusUnprocessableEntity)
 		return
 	}

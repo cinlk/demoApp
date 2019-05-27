@@ -954,6 +954,40 @@ func (p *PersonDbOperator) CollectedOnlineApply(userId string, offset, limit int
 }
 
 
+func (p *PersonDbOperator) CollectedPost(userId string) ([]httpModel.CollectedPostModel, error){
+
+	var res []httpModel.CollectedPostModel
+
+	err := p.orm.Model(&dbModel.UserCollectedPost{}).
+		Joins("inner join forum_article  on forum_article.uuid = user_collected_post.post_uuid").
+		Where("user_collected_post.user_id = ?", userId).
+		Select("user_collected_post.post_uuid as post_id, forum_article.title as name").Scan(&res).Error
+
+	if err != nil{
+		return res, err
+	}
+	for i:=0; i < len(res); i++{
+		var target dbModel.UserCollectedPost
+		err = p.orm.Model(&dbModel.UserCollectedPost{}).
+			Where("user_id = ? and post_uuid = ?", userId, res[i].PostId).First(&target).Error
+		if err != nil{
+			continue
+		}
+		// 关联的分组名称
+		_ = p.orm.Model(&target).Association("groups").Find(&target.Groups)
+		if len(target.Groups) > 0{
+			for _, k := range target.Groups{
+				res[i].GroupName = append(res[i].GroupName,k.GroupName )
+			}
+
+		}
+
+	}
+
+
+	return res, nil
+}
+
 func (p *PersonDbOperator) UnCollectedJobs(userId, kind string,  ids []string) error{
 
 	var t = dbModel.JobType(kind)
@@ -991,6 +1025,44 @@ func (p *PersonDbOperator) UnCollectedOnlineApply(userId string, ids []string) e
 		Where("user_id = ? and online_apply_id in (?)", userId, ids).
 		Update("is_collected", false).Error
 }
+
+
+func  (p *PersonDbOperator) RemovePostGroup(userId, name string) error{
+
+	session := p.orm.Begin()
+	var target dbModel.UserCollectedGroup
+	err := session.Model(&dbModel.UserCollectedGroup{}).Where("user_id = ? and group_name = ?", userId, name).
+		First(&target).Error
+	if err != nil{
+		session.Rollback()
+		return err
+	}
+	_ = session.Model(&target).Association("posts").Find(&target.Posts)
+	if len(target.Posts) > 0{
+		err = session.Model(&target).Unscoped().Association("posts").Delete(&target.Posts).Error
+		if err != nil{
+			session.Rollback()
+			return err
+		}
+	}
+	err = session.Unscoped().Delete(&target).Error
+	if err != nil{
+		session.Rollback()
+		return err
+	}
+
+	session.Commit()
+
+	return nil
+}
+
+
+func (p *PersonDbOperator) RenamePostGroup(userId, groupId, name string) error {
+
+	return p.orm.Model(&dbModel.UserCollectedGroup{}).Where("user_id = ? and id = ?", userId, groupId).
+		Update("group_name", name).Error
+}
+
 //func (p *PersonDbOperator) DeleteResumeEstimate(id, resumeId string) error{
 //	return p.orm.Unscoped().
 //		Delete(&dbModel.TextResumeEstimate{}, "id = ? and resume_id = ?", id, resumeId).Error

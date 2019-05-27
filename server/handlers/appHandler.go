@@ -184,3 +184,17 @@ func (app *appHandler) forumWarns(w http.ResponseWriter, r *http.Request, _ http
 
 	app.JSON(w, warns, http.StatusOK)
 }
+
+
+func (app *appHandler) userPostGroups(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
+
+	var userId = r.Header.Get(utils.USER_ID)
+
+	res, err := app.dbOperator.UserRelatedPostGroup(userId)
+	if err != nil{
+		app.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	app.JSON(w, res, http.StatusOK)
+
+}

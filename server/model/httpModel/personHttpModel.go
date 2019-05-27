@@ -176,3 +176,8 @@ type CollectedOnlineApplyModel struct {
 	
 }
 
+type CollectedPostModel struct {
+	PostId string `json:"post_id"`
+	Name string `json:"name"`
+	GroupName []string `json:"group_name"`
+}

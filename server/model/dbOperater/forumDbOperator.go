@@ -15,6 +15,7 @@ const (
 	recommand = "recommand"
 	offer     = "offer"
 	help      = "help"
+	mypost    = "mypost"
 )
 
 type ForumDboperator struct {
@@ -41,17 +42,35 @@ func (f *ForumDboperator) Articles(t string, offset, limit int, userId string) (
 		}
 
 	} else {
-		err = f.orm.Model(&dbModel.ForumArticle{}).
-			Joins("inner join \"user\" on \"user\".uuid =  forum_article.user_id").
-			Select("forum_article.uuid, forum_article.title, forum_article.content, forum_article.user_id,"+
-				"forum_article.read_count as read, forum_article.type as kind, forum_article.created_at as created_time,  "+
-				"\"user\".name as user_name, \"user\".user_icon as user_icon").
-			Where("forum_article.validate = ? and forum_article.type = ?", true, t).
-			Order("forum_article.created_at desc").Offset(offset).Limit(limit).
-			Scan(&res).Error
-		if err != nil {
-			return nil, err
+		// 查询自己发布的帖子
+		if t == mypost{
+
+			err = f.orm.Model(&dbModel.ForumArticle{}).
+				Joins("inner join \"user\" on \"user\".uuid =  forum_article.user_id").
+				Select("forum_article.uuid, forum_article.title, forum_article.content, forum_article.user_id,"+
+					"forum_article.read_count as read, forum_article.type as kind, forum_article.created_at as created_time,  "+
+					"\"user\".name as user_name, \"user\".user_icon as user_icon").
+				Where("forum_article.validate = ? and forum_article.user_id = ?", true, userId).
+				Order("forum_article.created_at desc").Offset(offset).Limit(limit).
+				Scan(&res).Error
+			if err != nil {
+				return nil, err
+			}
+
+		}else{
+			err = f.orm.Model(&dbModel.ForumArticle{}).
+				Joins("inner join \"user\" on \"user\".uuid =  forum_article.user_id").
+				Select("forum_article.uuid, forum_article.title, forum_article.content, forum_article.user_id,"+
+					"forum_article.read_count as read, forum_article.type as kind, forum_article.created_at as created_time,  "+
+					"\"user\".name as user_name, \"user\".user_icon as user_icon").
+				Where("forum_article.validate = ? and forum_article.type = ?", true, t).
+				Order("forum_article.created_at desc").Offset(offset).Limit(limit).
+				Scan(&res).Error
+			if err != nil {
+				return nil, err
+			}
 		}
+
 	}
 
 	// 统计点赞和回复数据， 根据userid 检查该用户是否点赞和收藏该帖子
@@ -64,15 +83,66 @@ func (f *ForumDboperator) Articles(t string, offset, limit int, userId string) (
 		if like != 0 {
 			res[i].IsLike = true
 		}
-		var collected int
-		_ = f.orm.Model(&dbModel.UserCollectedPost{}).Where("post_uuid = ? and user_id = ?", res[i].Uuid, userId).Count(&collected)
-		if collected != 0 {
+		var collected dbModel.UserCollectedPost
+		//var collected int
+		_ = f.orm.Model(&dbModel.UserCollectedPost{}).Where("post_uuid = ? and user_id = ?", res[i].Uuid, userId).First(&collected)
+		if collected.ID > 0 {
 			res[i].IsCollected = true
+			// 获取对该帖子的分组
+			_ = f.orm.Model(&collected).Association("groups").Find(&collected.Groups).Error
+			for _, name := range collected.Groups{
+				res[i].UserGroup = append(res[i].UserGroup, name.GroupName)
+			}
+
 		}
+
+
 
 	}
 
 	return res, nil
+
+}
+
+func (f *ForumDboperator) FindArticleBy(userId, postId string)  (*httpModel.HttpForumHttpModel, error)  {
+
+	var res httpModel.HttpForumHttpModel
+
+
+	err := f.orm.Model(&dbModel.ForumArticle{}).
+		Joins("inner join \"user\" on \"user\".uuid =  forum_article.user_id").
+		Select("forum_article.uuid, forum_article.title, forum_article.content, forum_article.user_id,"+
+			"forum_article.read_count as read, forum_article.type as kind, forum_article.created_at as created_time,  "+
+			"\"user\".name as user_name, \"user\".user_icon as user_icon").
+		Where("forum_article.validate = ? and forum_article.uuid = ?",
+			true, postId).
+		Order("forum_article.created_at desc").
+		Scan(&res).Error
+	if err != nil {
+		return nil, err
+	}
+
+	_ = f.orm.Model(&dbModel.UserLikePost{}).Where("post_uuid = ?", res.Uuid).Count(&res)
+	_ = f.orm.Model(&dbModel.ReplyForumPost{}).Where("post_uuid = ?", res.Uuid).Count(&res)
+	var like int
+	_ = f.orm.Model(&dbModel.UserLikePost{}).Where("post_uuid = ? and user_id = ?", res.Uuid, userId).Count(&like)
+	if like != 0 {
+		res.IsLike = true
+	}
+	var collected dbModel.UserCollectedPost
+	//var collected int
+	_ = f.orm.Model(&dbModel.UserCollectedPost{}).Where("post_uuid = ? and user_id = ?", res.Uuid, userId).First(&collected)
+	if collected.ID > 0 {
+		res.IsCollected = true
+		// 获取对该帖子的分组
+		_ = f.orm.Model(&collected).Association("groups").Find(&collected.Groups).Error
+		for _, name := range collected.Groups{
+			res.UserGroup = append(res.UserGroup, name.GroupName)
+		}
+
+	}
+
+	return &res, nil
 
 }
 
@@ -246,11 +316,31 @@ func (f *ForumDboperator) UserCollectedPost(userId, postId string, b bool) error
 		}
 
 	} else {
-		err := session.Unscoped().Delete(dbModel.UserCollectedPost{}, "user_id = ? and post_uuid =?", userId, postId).Error
+		// 取消收藏
+		var target  dbModel.UserCollectedPost
+
+		err := session.Model(&dbModel.UserCollectedPost{}).Where("user_id = ? and post_uuid =?", userId, postId).First(&target).Error
+		if err != nil{
+			session.Rollback()
+			return  err
+		}
+		err = session.Model(&target).Unscoped().Association("groups").Find(&target.Groups).Error
+		if len(target.Groups) > 0{
+			err = session.Model(&target).Unscoped().Association("groups").Delete(&target.Groups).Error
+		}
+		if err != nil{
+			session.Rollback()
+			return err
+		}
+
+		err = session.Unscoped().Delete(&target).Error
 		if err != nil {
 			session.Rollback()
 			return err
 		}
+		// 取消关联的分组
+
+
 	}
 	session.Commit()
 	return nil
@@ -419,6 +509,86 @@ func (f *ForumDboperator) SearchPostBy(word, userId string, offset, limit int) (
 	return res, nil
 
 	//return []string{"帖子1", "帖子2", "帖子3"}, nil
+}
+
+func (f *ForumDboperator) RelatePostGroupName(userId, postId string, names []string) error  {
+
+	session := f.orm.Begin()
+	// 新分组
+	for _, n := range names{
+		err := session.Where("user_id = ? and group_name = ?", userId, n).
+			FirstOrCreate(&dbModel.UserCollectedGroup{
+			UserId: userId,
+			GroupName: n,
+		}).Error
+		if err != nil{
+			session.Rollback()
+			return err
+		}
+	}
+
+
+	// 先删除 原来关联的分组
+	var post dbModel.UserCollectedPost
+	err := session.Model(&dbModel.UserCollectedPost{}).
+		Where("user_id = ? and post_uuid = ?", userId, postId ).First(&post).Error
+	if err != nil{
+		session.Rollback()
+		return err
+	}
+
+	err = session.Model(&post).Association("groups").Find(&post.Groups).Error
+	if len(post.Groups) > 0{
+		err = session.Model(&post).Association("groups").Delete(&post.Groups).Error
+	}
+	if err != nil {
+		session.Rollback()
+		return err
+	}
+
+	if len(names) > 0{
+		var groups []dbModel.UserCollectedGroup
+		_ = session.Model(&dbModel.UserCollectedGroup{}).Where("user_id = ? and group_name in (?)",
+			userId, names).Find(&groups).Error
+		if  len(groups) > 0{
+
+			// 在设置新的分组
+			err = session.Model(&post).Association("groups").Append(groups).Error
+			if err != nil{
+				session.Rollback()
+				return err
+			}
+		}
+	}
+
+
+
+
+	session.Commit()
+
+	return nil
+
+}
+
+
+func (f *ForumDboperator) PostGroupNames(userId, postId string) (httpModel.PostGroups, error){
+
+	var res httpModel.PostGroups
+	var target dbModel.UserCollectedPost
+	err := f.orm.Model(&dbModel.UserCollectedPost{}).
+		Where("user_id = ? and post_uuid = ?", userId, postId).First(&target).Error
+	if err != nil{
+		return res, nil
+	}
+	_ = f.orm.Model(&target).Association("groups").Find(&target.Groups)
+	if len(target.Groups) > 0{
+		for _, i := range target.Groups{
+			res.Name = append(res.Name, i.GroupName)
+		}
+	}
+
+
+	return res, nil
 }
 
 func NewForumDboperator() *ForumDboperator {

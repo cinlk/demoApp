@@ -1,6 +1,7 @@
 p, admin, /*, *, allow
 p, *, /logout, DELETE, allow
 
+p, seeker, /api/v1/global/*, *, allow
 p, seeker, /api/v1/account/*, *, allow
 p, seeker, /api/v1/test/*, *, allow
 p, seeker, /api/v1/recruite/*, *, allow
