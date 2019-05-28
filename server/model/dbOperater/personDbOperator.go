@@ -5,6 +5,7 @@ import (
 	"demoApp/server/model/httpModel"
 	utils2 "demoApp/server/utils"
 	"demoApp/server/utils/errorStatus"
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"goframework/orm"
@@ -1067,6 +1068,89 @@ func (p *PersonDbOperator) RenamePostGroup(userId, groupId, name string) error {
 //	return p.orm.Unscoped().
 //		Delete(&dbModel.TextResumeEstimate{}, "id = ? and resume_id = ?", id, resumeId).Error
 //}
+
+func (p *PersonDbOperator) MySubscribeJobCondition(userId string) ([]httpModel.JobSubscribeCondition, error)  {
+	var res  []httpModel.JobSubscribeCondition
+
+	err := p.orm.Model(&dbModel.JobSubScribeCondition{}).Where("user_id = ?", userId).
+		Select("id, type, salary, degree, citys, fields, intern_day, intern_month, intern_salary ,created_at as created_time ").
+		Scan(&res).Error
+	if err != nil{
+		return res, err
+	}
+
+	return res, nil
+
+
+}
+func (p *PersonDbOperator) CreateJobSubscribe(userId string, data map[string]interface{}) (string,error){
+
+	var target =  dbModel.JobSubScribeCondition{
+		UserId: userId,
+	}
+	fmt.Println(data)
+	if t, ok := data["type"].(string); ok{
+		target.Type = dbModel.JobType(t)
+
+		target.Degree = data["degree"].(string)
+		target.Citys = data["citys"].([]string)
+		target.Fields = data["fields"].(string)
+
+		switch  dbModel.JobType(t){
+		case dbModel.InternType:
+			target.InternDay = data["intern_day"].(string)
+			target.InternMonth = data["intern_month"].(string)
+			target.InternSalary = data["intern_salary"].(string)
+
+		case dbModel.GraduateType:
+			target.Salary = data["salary"].(string)
+
+			break
+		default:
+			return "", &errorStatus.AppError{
+				Err: errors.New("invalidate job type"),
+				Code: http.StatusBadRequest,
+			}
+		}
+		var count int
+		_ = p.orm.Model(&dbModel.JobSubScribeCondition{}).Where("user_id = ?", userId).Count(&count).Error
+		if count >= 5{
+			return  "",  &errorStatus.AppError{
+				Err: errors.New("not more than 5 subscribe job"),
+				Code: http.StatusForbidden,
+			}
+		}
+		err := p.orm.Create(&target).Error
+		if err != nil{
+
+			return  "", err
+		}
+		return  strconv.Itoa(int(target.ID)), nil
+
+
+	}else{
+
+		return "",  &errorStatus.AppError{
+			Err: errors.New("invalidate job type"),
+			Code: http.StatusBadRequest,
+		}
+	}
+
+
+}
+
+
+func (p *PersonDbOperator) UpdateJobSubscribe(userId string, id string, data map[string]interface{}) error{
+
+	return  p.orm.Model(&dbModel.JobSubScribeCondition{}).
+		Where("user_id = ? and id = ?", userId, id).Updates(data).Error
+}
+
+func (p *PersonDbOperator) DeleteJobSubscribe(userId string, id string) error  {
+
+	return p.orm.Unscoped().
+		Delete(&dbModel.JobSubScribeCondition{}, "user_id = ? and id = ?", userId, id).Error
+}
 
 func NewPersonDbOperator() *PersonDbOperator {
 	return &PersonDbOperator{

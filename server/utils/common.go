@@ -67,6 +67,17 @@ func Struct2Map(i interface{}, ignore ...string) *map[string]interface{} {
 			if tag := strings.Split(t.Field(i).Tag.Get("json"),",")[0]; tag != "" {
 				res[tag] = v.Field(i).Int()
 			}
+		case reflect.Slice:
+			if tag := strings.Split(t.Field(i).Tag.Get("json"),",")[0]; tag != "" {
+				// 只有字符串切片
+				var tmp []string
+				if v.Field(i).Type() == reflect.TypeOf([]string{}){
+					for k := 0; k < v.Field(i).Len(); k ++{
+						tmp = append(tmp, v.Field(i).Index(k).String())
+					}
+				}
+				res[tag] = tmp
+			}
 
 		}
 

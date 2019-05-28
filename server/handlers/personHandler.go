@@ -152,6 +152,17 @@ type renamePostGroupNameReq struct {
 	NewName string `json:"new_name" binding:"required"`
 }
 
+type jobSubscribeReq struct {
+	Type string `json:"type" binding:"required"`
+	Fields  string `json:"fields" binding:"required"`
+	Citys   []string `json:"citys" binding:"required"`
+	Degree  string `json:"degree" binding:"required"`
+	InternDay     string `json:"intern_day"`
+	InternMonth   string `json:"intern_month"`
+	InternSalary  string `json:"intern_salary"`
+	Salary  string `json:"salary"`
+}
+
 type personHandler struct {
 	baseHandler
 	UrlPrefix string
@@ -1164,4 +1175,73 @@ func (p *personHandler) renamePostGroup(w http.ResponseWriter, r *http.Request, 
 	}, http.StatusAccepted)
 
 
+}
+
+func (p *personHandler) myJobSubscribeCondition(w http.ResponseWriter, r *http.Request, param httprouter.Params)  {
+	var userId  = r.Header.Get(utils.USER_ID)
+	res, err := p.db.MySubscribeJobCondition(userId)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	p.JSON(w, res, http.StatusOK)
+}
+
+// 职位订阅
+func (p *personHandler) createJobSubscribe(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var req jobSubscribeReq
+	err := p.validate.Validate(r, &req)
+	if err != nil{
+		p.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	var m = utils.Struct2Map(req)
+
+	id, err := p.db.CreateJobSubscribe(userId, *m)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	p.JSON(w, map[string]interface{}{
+		"id": id,
+	}, http.StatusCreated)
+
+}
+
+func (p *personHandler) updateJobSubscribe(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var subscribeId = param.ByName("subscribeId")
+	var req jobSubscribeReq
+	err := p.validate.Validate(r, &req)
+	if err != nil{
+		p.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+	var m = utils.Struct2Map(req)
+	err = p.db.UpdateJobSubscribe(userId, subscribeId, *m)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusAccepted)
+
+}
+
+
+func (p *personHandler) deleteJobSubscribe(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var subscribeId = param.ByName("subscribeId")
+	err := p.db.DeleteJobSubscribe(userId, subscribeId)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusAccepted)
 }

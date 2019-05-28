@@ -442,6 +442,12 @@ func RegisterRouter(router *httprouter.Router) {
 		person.DELETE("/post/group/:name", personHandler.removePostGroup)
 		person.PUT("/post/group/name", personHandler.renamePostGroup)
 
+		// 订阅职位
+		person.GET("/job/subscribe", personHandler.myJobSubscribeCondition)
+		person.POST("/job/subscribe", personHandler.createJobSubscribe)
+		person.PUT("/job/subscribe/:subscribeId", personHandler.updateJobSubscribe)
+		person.DELETE("/job/subscribe/:subscribeId", personHandler.deleteJobSubscribe)
+
 	}
 
 	test := rg.NewGroupRouter(testh.UrlPrefix, router, middleware.AuthorizationVerify)

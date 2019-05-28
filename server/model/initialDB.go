@@ -45,6 +45,7 @@ func CreateTables() {
 		&dbModel.TextResumeEducation{}, &dbModel.TextResumeWorkExperience{}, &dbModel.TextResumeProject{},
 		&dbModel.TextResumeCollegeActivity{}, &dbModel.TextResumeSocialPractice{}, &dbModel.TextResumeSkills{},
 		&dbModel.TextResumeOther{}, &dbModel.TextResumeEstimate{},
+		&dbModel.JobSubScribeCondition{},
 	).Error
 
 	if err != nil {
@@ -309,6 +310,12 @@ func CreateTables() {
 	}
 	err = orm.DB.Model(&dbModel.TextResumeEstimate{}).AddForeignKey("resume_id", "text_resume(resume_id)", "CASCADE", "CASCADE").Error
 	if err != nil{
+		gLog.LOG_PANIC(err)
+	}
+
+	// 职位订阅
+	err = orm.DB.Model(&dbModel.JobSubScribeCondition{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
 		gLog.LOG_PANIC(err)
 	}
 

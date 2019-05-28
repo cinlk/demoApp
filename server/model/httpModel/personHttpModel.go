@@ -181,3 +181,19 @@ type CollectedPostModel struct {
 	Name string `json:"name"`
 	GroupName []string `json:"group_name"`
 }
+
+
+type JobSubscribeCondition struct {
+	Id string `json:"id"`
+	Type string `json:"type"`
+	// 行业领域
+	Fields  string `json:"fields"`
+	Citys   pq.StringArray `json:"citys"`
+	Degree  string `json:"degree"`
+	InternDay     string `json:"intern_day"`
+	InternMonth   string `json:"intern_month"`
+	InternSalary  string `json:"intern_salary"`
+	Salary  string `json:"salary"`
+	CreatedTime tString `json:"created_time"`
+
+}

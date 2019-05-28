@@ -2,6 +2,7 @@ package dbModel
 
 import (
 	"github.com/jinzhu/gorm"
+	"github.com/lib/pq"
 	"time"
 )
 
@@ -189,3 +190,32 @@ type TextResumeEstimate struct {
 	ResumeId string `gorm:"not null" json:"resume_id"`
 	Content string `json:"content"`
 }
+
+
+// 订阅职位条件
+type JobSubScribeCondition struct {
+	gorm.Model `json:"-"`
+	UserId string `gorm:"not null" json:"user_id"`
+	Type   JobType `gorm:"type:mood" json:"type"`
+	// 行业领域
+	Fields  string `json:"fields"`
+	Citys   pq.StringArray `gorm:"type:text[]" json:"citys"`
+	Degree  string `json:"degree"`
+	InternDay     string `json:"intern_day"`
+	InternMonth   string `json:"intern_month"`
+	InternSalary  string `json:"intern_salary"`
+	Salary  string `json:"salary"`
+
+}
+
+//type GraduateJobSubscribe struct {
+//	gorm.Model `json:"-"`
+//	UserId string `gorm:"not null" json:"user_id"`
+//	// 行业领域
+//	Fields  pq.StringArray `json:"fields"`
+//	Citys   pq.StringArray `json:"citys"`
+//	Degree  string `json:"degree"`
+//	Salary  string `json:"salary"`
+//
+//
+//}
