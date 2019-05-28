@@ -197,3 +197,15 @@ type JobSubscribeCondition struct {
 	CreatedTime tString `json:"created_time"`
 
 }
+
+type NotiyMessageSettings struct {
+
+	Type string `json:"type"`
+	Open bool `json:"open"`
+}
+
+type UserDefaultTalkMessage struct {
+	Messages pq.StringArray `json:"messages"`
+	Number int `json:"number"`
+	Open bool `json:"open"`
+}

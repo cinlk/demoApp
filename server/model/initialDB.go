@@ -46,6 +46,10 @@ func CreateTables() {
 		&dbModel.TextResumeCollegeActivity{}, &dbModel.TextResumeSocialPractice{}, &dbModel.TextResumeSkills{},
 		&dbModel.TextResumeOther{}, &dbModel.TextResumeEstimate{},
 		&dbModel.JobSubScribeCondition{},
+
+		&dbModel.NotifyMessageSwitch{}, &dbModel.NotifyMessageNightSwitch{},
+		&dbModel.DefaultFirstMessage{},  &dbModel.UserFeedBackMessage{},
+		&dbModel.UserOpenResume{},
 	).Error
 
 	if err != nil {
@@ -319,7 +323,28 @@ func CreateTables() {
 		gLog.LOG_PANIC(err)
 	}
 
+	// 消息免打扰
+	err = orm.DB.Model(&dbModel.NotifyMessageSwitch{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
 
+	err = orm.DB.Model(&dbModel.NotifyMessageNightSwitch{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	// 打招呼用语
+	err = orm.DB.Model(&dbModel.DefaultFirstMessage{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
+
+	// 用户简历可见
+	err = orm.DB.Model(&dbModel.UserOpenResume{}).AddForeignKey("user_id", "account(uuid)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		gLog.LOG_PANIC(err)
+	}
 }
 
 func CloseDB() {

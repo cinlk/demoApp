@@ -228,6 +228,7 @@ func RegisterRouter(router *httprouter.Router) {
 		global.POST("/news", apphandler.News)
 		global.GET("/citys", apphandler.Citys)
 		global.GET("/postGroups", apphandler.userPostGroups, middleware.AuthorizationVerify)
+		global.GET("/talk/message", apphandler.userDefaulTalkMessage, middleware.AuthorizationVerify)
 		global.GET("/business/field", apphandler.BusinessField)
 		global.GET("/subBusiness/field", apphandler.BusinessFieldJob)
 		global.GET("/company/type", apphandler.CompanyType)
@@ -250,8 +251,10 @@ func RegisterRouter(router *httprouter.Router) {
 		account.GET("/anonymouse", accoutHandler.LoginWithAnonymous)
 		account.PUT("/code/:phone", accoutHandler.SecurityCode)
 		account.PUT("/phone/:phone", accoutHandler.ExistAccountCode)
+		account.PUT("/new/phone/:phone/:code", accoutHandler.changePhone, middleware.AuthorizationVerify)
 		account.POST("/registry/pwd", accoutHandler.RegistryAccount)
 		account.POST("/password", accoutHandler.ResetAccountPassword)
+		account.PUT("/new/password", accoutHandler.resetPassword, middleware.AuthorizationVerify)
 		account.POST("/login/code", accoutHandler.LoginWithCode)
 		account.POST("/login/social", accoutHandler.LoginWithRelatedAccount)
 		account.POST("/registry/social", accoutHandler.BindRelatedAccount)
@@ -447,6 +450,20 @@ func RegisterRouter(router *httprouter.Router) {
 		person.POST("/job/subscribe", personHandler.createJobSubscribe)
 		person.PUT("/job/subscribe/:subscribeId", personHandler.updateJobSubscribe)
 		person.DELETE("/job/subscribe/:subscribeId", personHandler.deleteJobSubscribe)
+
+		person.GET("/user/phone", personHandler.accountPhoneNumber)
+
+		person.PUT("/notify/setting", personHandler.switchPushMessage)
+		person.GET("/notify/setting", personHandler.pushMessageSettings)
+
+		person.PUT("/setting/talk/:number", personHandler.setDefaulTalkMessage)
+		person.GET("/default/talk", personHandler.allDefaulTalkMessage)
+		person.PUT("/default/talk/open/:flag", personHandler.switchDefaultTalk)
+
+		person.POST("/user/feedback", personHandler.userFeedBack)
+
+		person.PUT("/open/resume/:flag", personHandler.userResumeOpenStatue)
+		person.GET("/open/resume/status", personHandler.getUserResumeOpenStatue)
 
 	}
 

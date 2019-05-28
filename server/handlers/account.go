@@ -3,6 +3,7 @@ package handlers
 import (
 	"demoApp/server/model/dbModel"
 	"demoApp/server/model/dbOperater"
+	"demoApp/server/model/httpModel"
 	"demoApp/server/utils"
 	"demoApp/server/utils/cache"
 	"demoApp/server/utils/errorStatus"
@@ -77,6 +78,12 @@ type recruiterInfoReq struct {
 	Title     string `json:"title"`
 }
 
+type resetPwdByOldPwd struct {
+	NewPwd string `json:"new_pwd"`
+	OldPwd string `json:"old_pwd"`
+}
+
+
 type phoneFormater string
 
 func (p phoneFormater) isValide() bool {
@@ -119,6 +126,29 @@ func (a *accountHandle) ExistAccountCode(w http.ResponseWriter, r *http.Request,
 
 	a.sendVeifyCode(w, phone)
 
+}
+
+func (a *accountHandle) changePhone(w http.ResponseWriter, r *http.Request, param httprouter.Params)  {
+
+	var userId = r.Header.Get(utils.USER_ID)
+	var phone = param.ByName("phone")
+	var code = param.ByName("code")
+
+
+	c, err := a.verifyCode(w, phone, code)
+	if err != nil {
+		a.ERROR(w, err, c)
+		return
+	}
+
+	err = a.db.ResetAccountPhone(userId, phone)
+	if err != nil{
+		a.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	a.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusOK)
 }
 
 // 匿名访问
@@ -351,6 +381,27 @@ func (a *accountHandle) userInfo(w http.ResponseWriter, r *http.Request, _ httpr
 
 }
 
+func (a *accountHandle) resetPassword(w http.ResponseWriter, r *http.Request, para httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var req resetPwdByOldPwd
+	err := a.validate.Validate(r, &req)
+	if err != nil{
+		a.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = a.db.UpdatePasswordBy(userId, req.OldPwd, req.NewPwd)
+	if err != nil{
+		a.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	a.JSON(w, httpModel.HttpResultModel{
+		Result:"success",
+	}, http.StatusOK)
+
+}
+
 // recruiter
 
 func (a *accountHandle) RecuiterInfo(w http.ResponseWriter, r *http.Request, para httprouter.Params) {
@@ -381,6 +432,8 @@ func (a *accountHandle) RecuiterInfo(w http.ResponseWriter, r *http.Request, par
 	w.WriteHeader(http.StatusAccepted)
 
 }
+
+
 
 //  function tools
 func (a *accountHandle) verifyCode(w http.ResponseWriter, key, code string) (int, error) {
@@ -421,3 +474,5 @@ func (a *accountHandle) sendVeifyCode(w http.ResponseWriter, phone string) {
 		Code: code,
 	}, http.StatusCreated)
 }
+
+

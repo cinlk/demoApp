@@ -219,3 +219,59 @@ type JobSubScribeCondition struct {
 //
 //
 //}
+
+// 控制消息推送开关 TODO
+type NotifyMessageSwitch struct {
+
+	gorm.Model `json:"-"`
+	// 消息类型 TODO
+	Type string `json:"type"`
+	UserId string `json:"user_id"`
+	Open bool `gorm:"default:true" json:"open"`
+}
+
+// 夜间免打扰 开关
+type NotifyMessageNightSwitch struct {
+	gorm.Model `json:"-"`
+	UserId string `gorm:"unique; not null"`
+	Open bool `gorm:"default:false" json:"open"`
+}
+
+
+// 求职者 发送的打招呼默认语句 TODO
+// 用户创建时 加入数据
+type DefaultFirstMessage struct {
+	gorm.Model `json:"-"`
+	Messages pq.StringArray `gorm:"type:text[]; not null"`
+	UserId string `gorm:"unique" json:"user_id"`
+	DefaultNum   int  `json:"default_num"`
+	// 是否开启打招呼用语
+	Open bool  `gorm:"default:true" json:"open"`
+
+
+}
+
+
+
+// 用户提交的反馈信息 TODO
+type UserFeedBackMessage struct {
+	gorm.Model `json:"-"`
+	// 可能有
+	UserId  string `json:"user_id"`
+	Problem string `json:"problem"`
+	Describe string `json:"describe"`
+	ImageOneUrl string  `json:"image_one_url"`
+	ImageTwoUrl string `json:"image_two_url"`
+
+
+}
+
+
+
+
+// 用户简历对外可见  完善  TODO
+type UserOpenResume struct {
+	gorm.Model `json:"-"`
+	UserId string `json:"user_id"`
+	Open bool `gorm:"default:true" json:"open"`
+}

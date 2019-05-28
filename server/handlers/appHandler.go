@@ -198,3 +198,18 @@ func (app *appHandler) userPostGroups(w http.ResponseWriter, r *http.Request, _ 
 	app.JSON(w, res, http.StatusOK)
 
 }
+
+// 用户设置的默认打招呼语句
+func (app *appHandler) userDefaulTalkMessage(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+
+	mes, err := app.dbOperator.UserTalkDefaultMessage(userId)
+	if err != nil{
+		app.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	app.JSON(w, map[string]interface{}{
+		"talk_default_message": mes,
+	}, http.StatusOK)
+}

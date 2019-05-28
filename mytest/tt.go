@@ -2,7 +2,6 @@ package main
 
 import (
 	"demoApp/server/model/dbModel"
-	"demoApp/server/utils"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"math/rand"
@@ -255,6 +254,21 @@ func testForum() {
 
 }
 
+func addUserDefaultTalk()  {
+	var mes  = []string{"语句定位", "当前为多", "dqdwqfggg", "达瓦大"}
+
+	err := testDB.Create(&dbModel.DefaultFirstMessage{
+		Messages: mes,
+		DefaultNum: 0,
+		Open: true,
+		UserId: "1c0874f5-74c0-11e9-914b-a0999b089907",
+	}).Error
+	if err != nil{
+		fmt.Println(err)
+	}
+
+}
+
 func main() {
 
 	loadDB()
@@ -269,12 +283,6 @@ func main() {
 	//testLeanCloud()
 	//testSystemMessage()
 	//testForum()
-	var ts = "2009-11"
-	t, err := time.Parse(utils.RESUME_TIME_FORMAT, ts)
-	if err != nil{
-		fmt.Println(err)
-	}
-	var rts = t.Format(utils.RESUME_TIME_FORMAT)
-	fmt.Println(t, rts)
+	addUserDefaultTalk()
 
 }

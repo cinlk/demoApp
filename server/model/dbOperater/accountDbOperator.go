@@ -159,6 +159,55 @@ func (a *AccountDbOperator) RegistryAccount(phone, password string) (token strin
 
 }
 
+func (a *AccountDbOperator) ResetAccountPhone(userId, phone string) error  {
+
+	var exsit = 0
+	_ = a.orm.Model(&dbModel.Account{}).Where("phone = ?", phone).Count(&exsit)
+	if exsit > 0{
+		return &errorStatus.AppError{
+			Err: errors.New("phone has exist"),
+			Code: http.StatusConflict,
+		}
+	}
+	return  a.orm.Model(&dbModel.Account{}).Where("uuid = ?", userId).Update("phone", phone).Error
+}
+
+func (a *AccountDbOperator) UpdatePasswordBy(userId, oldPwd, newPwd string) (error)  {
+
+
+	var account dbModel.Account
+	err := a.orm.Model(&dbModel.Account{}).Where("uuid = ?", userId).
+		First(&account).Error
+	if err != nil{
+		return err
+
+	}
+
+
+	if utils.CompareHashPassword(account.Password, oldPwd) == false {
+		return  &errorStatus.AppError{
+			Code: http.StatusForbidden,
+			Err:  errors.New("password not match"),
+		}
+	}
+
+
+	newHashedPwd, err := utils.DefaultCryptPassword(newPwd)
+	if err != nil {
+		return  err
+	}
+
+	err = a.orm.Model(account).Update("password", newHashedPwd).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+
+
+}
+
 func (a *AccountDbOperator) ResetPassword(phone, password string) (token string, err error) {
 
 	hashPwd, err := utils.DefaultCryptPassword(password)

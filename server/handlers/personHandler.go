@@ -163,6 +163,16 @@ type jobSubscribeReq struct {
 	Salary  string `json:"salary"`
 }
 
+type notifyMessageSwitchReq struct {
+	Type string `json:"type"`
+	Flag bool `json:"flag"`
+}
+
+type userFeedBackProblem struct {
+	Name string `json:"name"`
+	Describe string `json:"describe"`
+}
+
 type personHandler struct {
 	baseHandler
 	UrlPrefix string
@@ -1244,4 +1254,246 @@ func (p *personHandler) deleteJobSubscribe(w http.ResponseWriter, r *http.Reques
 	p.JSON(w, httpModel.HttpResultModel{
 		Result: "success",
 	}, http.StatusAccepted)
+}
+
+
+//获取用户手机号 已经 绑定的第三方账号 TODO
+func (p *personHandler) accountPhoneNumber(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+
+	phone, err := p.db.AccountPhone(userId)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, map[string]interface{}{
+		"phone": phone,
+	}, http.StatusOK)
+
+}
+
+
+// 消息推送开关
+func (p *personHandler) switchPushMessage(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+
+	var userId = r.Header.Get(utils.USER_ID)
+	var req notifyMessageSwitchReq
+
+	err := p.validate.Validate(r, &req)
+	if err != nil{
+		p.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = p.db.NotifyMessageSwitch(userId, req.Type, req.Flag)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	p.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusAccepted)
+}
+
+func (p *personHandler) pushMessageSettings(w http.ResponseWriter, r *http.Request, param httprouter.Params)  {
+
+	var userId = r.Header.Get(utils.USER_ID)
+	res, err := p.db.NotifyMessageSettings(userId)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, res, http.StatusOK)
+
+}
+
+
+// 修改默认的打招呼用语
+func (p  *personHandler) setDefaulTalkMessage(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var num = param.ByName("number")
+	n , err := strconv.Atoi(num)
+	if err != nil{
+		p.ERROR(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = p.db.ChangeDefaultTalkMessage(userId, n)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusOK)
+}
+
+
+func (p *personHandler) allDefaulTalkMessage(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+
+	var userId = r.Header.Get(utils.USER_ID)
+
+	res, err := p.db.AllDefaultTalkMessage(userId)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, res, http.StatusOK)
+}
+
+func (p *personHandler) switchDefaultTalk(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+	var flag = param.ByName("flag")
+	var b bool
+	if flag == "true"{
+		b = true
+	}else if  flag == "false"{
+		b = false
+	}
+
+	err := p.db.UpdateDefaultTalkSetting(userId, b)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusOK)
+}
+
+
+// 用户反馈信息
+func (p *personHandler) userFeedBack(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
+
+	var imageData [][]byte
+	var userId = r.Header.Get(utils.USER_ID)
+	var existImageOne = true
+	var existImageTwo = true
+
+	name, _, err := r.FormFile("name")
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "can't get name").Error(), http.StatusBadRequest)
+		return
+	}
+	nameBytes, _ := ioutil.ReadAll(name)
+
+	defer name.Close()
+
+	describe, _, err := r.FormFile("describe")
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "can't get describe").Error(), http.StatusBadRequest)
+		return
+	}
+	describeBytes, _ := ioutil.ReadAll(describe)
+
+	defer describe.Close()
+
+	// image 数据和名称  通过错误字符串 判断类型
+	imageOne, _, err := r.FormFile("image0")
+
+	if err != nil {
+		if err.Error() == "http: no such file"{
+			existImageOne = false
+		}else{
+			http.Error(w, errors.Wrap(err, "can't get image0 file").Error(), http.StatusBadRequest)
+			return
+		}
+
+	}
+
+
+	if existImageOne{
+		one, err := ioutil.ReadAll(imageOne)
+		if err != nil {
+			http.Error(w, errors.Wrap(err, "can't read file").Error(), http.StatusBadRequest)
+			return
+		}
+		imageData = append(imageData, one)
+
+		defer imageOne.Close()
+	}
+
+
+
+
+	imageTwo, _, err := r.FormFile("image1")
+	if err != nil {
+
+		if err.Error() == "http: no such file"{
+			existImageTwo = false
+		}else{
+			http.Error(w, errors.Wrap(err, "can't get image1 file").Error(), http.StatusBadRequest)
+			return
+		}
+
+	}
+	if existImageTwo{
+		defer imageTwo.Close()
+		two, err := ioutil.ReadAll(imageTwo)
+		if err != nil {
+			http.Error(w, errors.Wrap(err, "can't read file").Error(), http.StatusBadRequest)
+			return
+
+		}
+		imageData = append(imageData, two)
+	}
+
+	err = p.db.NewUserFeedBack(userId, string(nameBytes), string(describeBytes), imageData)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, httpModel.HttpResultModel{
+		Result: "success",
+	}, http.StatusOK)
+}
+
+
+
+func (p *personHandler) userResumeOpenStatue(w http.ResponseWriter, r *http.Request, param httprouter.Params){
+
+	var userId = r.Header.Get(utils.USER_ID)
+	var flag = param.ByName("flag")
+
+	var b bool
+
+	switch  flag {
+	case "true":
+		b = true
+	case "false":
+		b = false
+	default:
+		p.ERROR(w, errors.New("unkown"), http.StatusBadRequest)
+		return
+	}
+
+	err := p.db.UpdateUserResumeOpenStatus(userId, b)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	p.JSON(w, httpModel.HttpResultModel{
+		Result:"success",
+	}, http.StatusOK)
+
+}
+
+func (p *personHandler) getUserResumeOpenStatue(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
+	var userId = r.Header.Get(utils.USER_ID)
+
+	open, err := p.db.FindUserResumeOpenStatus(userId)
+	if err != nil{
+		p.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+	p.JSON(w, map[string]interface{}{
+		"open": open,
+	}, http.StatusOK)
 }

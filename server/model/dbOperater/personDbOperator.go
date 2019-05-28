@@ -1152,6 +1152,158 @@ func (p *PersonDbOperator) DeleteJobSubscribe(userId string, id string) error  {
 		Delete(&dbModel.JobSubScribeCondition{}, "user_id = ? and id = ?", userId, id).Error
 }
 
+func (p *PersonDbOperator) AccountPhone(userId string) (string, error){
+	var phone struct{
+		Phone string
+	}
+	err :=p.orm.Model(&dbModel.Account{}).Where("uuid = ?", userId).Select("phone").Scan(&phone).Error
+
+	return phone.Phone, err
+}
+
+// test TODO
+func (p *PersonDbOperator) NotifyMessageSettings(userId string) ([]httpModel.NotiyMessageSettings, error) {
+	// 默认设置
+	var types  = []string{"jobs", "applyProgress", "forum"}
+
+
+
+	var res  []httpModel.NotiyMessageSettings
+
+	for _, t := range types{
+		var target  httpModel.NotiyMessageSettings
+		target.Type = t
+		_ = p.orm.Model(&dbModel.NotifyMessageSwitch{}).Where("user_id = ? and type = ?", userId, t).
+			Select("open").Scan(&target).Error
+		res = append(res, target)
+	}
+
+	var night httpModel.NotiyMessageSettings
+	_ = p.orm.Model(&dbModel.NotifyMessageNightSwitch{}).Where("user_id = ?", userId).
+		Select("open").Scan(&night).Error
+	night.Type = "night"
+
+	res = append(res, night)
+	return res, nil
+
+}
+
+func (p *PersonDbOperator)  ChangeDefaultTalkMessage(userId string, num int) error {
+	var target dbModel.DefaultFirstMessage
+
+	err :=  p.orm.Model(&dbModel.DefaultFirstMessage{}).Where("user_id = ?", userId).First(&target).Error
+	if err != nil{
+		return err
+	}
+
+	if len(target.Messages) - 1 <  num{
+		return &errorStatus.AppError{
+			Err: errors.New("the number is wrong"),
+			Code: http.StatusNotAcceptable,
+		}
+	}
+	target.DefaultNum = num
+	return p.orm.Model(&target).Update("default_num", num).Error
+
+}
+
+func (p *PersonDbOperator) NotifyMessageSwitch(userId, t string, flag bool) error  {
+	switch t {
+	case "jobs", "applyProgress", "forum":
+		return p.orm.Where("user_id = ? and type = ?", userId, t).Assign(map[string]interface{}{
+			"open":flag,
+		}).FirstOrCreate(&dbModel.NotifyMessageSwitch{
+			UserId: userId,
+			Type: t,
+			Open: flag,
+		}).Error
+	case "night":
+		return p.orm.Where("user_id = ?", userId).Assign(map[string]interface{}{
+			"open":flag,
+		}).FirstOrCreate(&dbModel.NotifyMessageNightSwitch{
+			UserId: userId,
+			Open: flag,
+		}).Error
+
+	default:
+		return &errorStatus.AppError{
+			Err: errors.New("invalidate type"),
+			Code: http.StatusNotAcceptable,
+		}
+	}
+
+
+}
+
+func (p *PersonDbOperator) AllDefaultTalkMessage(userId string) (httpModel.UserDefaultTalkMessage, error)  {
+
+	var res httpModel.UserDefaultTalkMessage
+	err := p.orm.Model(&dbModel.DefaultFirstMessage{}).Where("user_id = ?", userId).
+		Select("messages, default_num as number, open").Scan(&res).Error
+
+	return res, err
+
+}
+
+func (p *PersonDbOperator) UpdateDefaultTalkSetting(userId string, flag bool) error  {
+
+	return p.orm.Model(&dbModel.DefaultFirstMessage{}).
+		Where("user_id = ?", userId).Update("open", flag).Error
+}
+
+func (p *PersonDbOperator) NewUserFeedBack(userId, name, describe string, imageData [][]byte) error  {
+
+	var url []int
+	for index, _ := range imageData{
+		// 存入七牛云 获取url
+		url = append(url, index)
+		fmt.Println(url)
+	}
+
+	// 发送邮件通知 管理员 TODO
+
+	// 存入数据库
+	return p.orm.Create(&dbModel.UserFeedBackMessage{
+		UserId: userId,
+		Problem: name,
+		Describe: describe,
+		ImageOneUrl: "www",
+		ImageTwoUrl: "www",
+	}).Error
+}
+
+func (p *PersonDbOperator)  UpdateUserResumeOpenStatus(userId string, open bool) error {
+
+	return  p.orm.Where("user_id = ?", userId).Assign(map[string]interface{}{
+		"open": open,
+	}).FirstOrCreate(&dbModel.UserOpenResume{
+		UserId: userId,
+		Open: open,
+	}).Error
+
+}
+
+
+func (p *PersonDbOperator)  FindUserResumeOpenStatus(userId string) (bool, error) {
+
+	var b struct{
+		Open bool
+	}
+
+
+	err := p.orm.Model(&dbModel.UserOpenResume{}).Where("user_id = ?", userId).
+		Select("open").Scan(&b).Error
+	if err == gorm.ErrRecordNotFound{
+		b.Open = true
+		return b.Open, nil
+	}
+
+	return b.Open, err
+
+
+}
+
+
 func NewPersonDbOperator() *PersonDbOperator {
 	return &PersonDbOperator{
 		orm: orm.DB,

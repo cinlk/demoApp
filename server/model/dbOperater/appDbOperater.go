@@ -40,6 +40,18 @@ func (a *AppDBoperator) UserRelatedPostGroup(userId string) ([]httpModel.UserPos
 	return res, err
 }
 
+
+func (a *AppDBoperator) UserTalkDefaultMessage(userId string) (string, error){
+
+	var target dbModel.DefaultFirstMessage
+	err := a.orm.Model(&target).Where("user_id = ?", userId).First(&target).Error
+	if err != nil{
+		return "", err
+	}
+
+	return target.Messages[target.DefaultNum], nil
+}
+
 func NewAppDBoperator() *AppDBoperator {
 
 	return &AppDBoperator{
