@@ -11,6 +11,13 @@ type AppDBoperator struct {
 	orm *gorm.DB
 }
 
+func (a *AppDBoperator) AppInfo()  (dbModel.AppInfo, error)  {
+	var target dbModel.AppInfo
+	err := a.orm.Model(&dbModel.AppInfo{}).First(&target).Error
+
+	return target, err
+}
+
 func (a *AppDBoperator) AppGuidanceItems() (res []dbModel.AppGuidanceItem) {
 
 	_ = a.orm.Model(&dbModel.AppGuidanceItem{}).Find(&res)

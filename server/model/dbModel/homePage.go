@@ -28,3 +28,20 @@ type TopJobs struct {
 	Title      string `gorm:"unique" json:"title"`
 	Link       string `json:"link"`
 }
+
+
+// app 相关信息
+type AppInfo struct {
+	//gorm.Model `json:"-"`
+	Wechat string `json:"wechat"`
+	ServicePhone string `json:"service_phone"`
+	AppId string `gorm:"primary_key" json:"app_id"`
+	AppIcon string `json:"app_icon"`
+	AppName string `json:"app_name"`
+	AppDescribe string `json:"app_describe"`
+	Company string `json:"company"`
+	Version string `json:"version"`
+	CopyRight string `json:"copy_right"`
+	AgreeMent string `json:"agree_ment"`
+
+}

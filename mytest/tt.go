@@ -4,6 +4,7 @@ import (
 	"demoApp/server/model/dbModel"
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"goframework/utils"
 	"math/rand"
 	"strconv"
 	"time"
@@ -269,6 +270,26 @@ func addUserDefaultTalk()  {
 
 }
 
+func appInfo(){
+
+	err := testDB.Create(&dbModel.AppInfo{
+		Wechat: "wechat213",
+		ServicePhone: "400-2134-567",
+		AppId: utils.GetUUID(),
+		AppIcon: "http://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/1024/Dollar-USD-icon.png",
+		AppName: "我的app",
+		AppDescribe: "非常的千万当前为多无群个人投入号院泰禾一塌糊涂有和统一号院泰禾核桃仁和认同和认同太阳花研讨会",
+		Company: "牛逼公司",
+		Version: "12.45",
+		CopyRight: "xxx@公司xxx",
+		AgreeMent: "http://sc.stock.cnfol.com/ggzixun/20190528/27503777.shtml",
+	}).Error
+	if err != nil{
+		fmt.Println(err)
+		return
+	}
+}
+
 func main() {
 
 	loadDB()
@@ -283,6 +304,6 @@ func main() {
 	//testLeanCloud()
 	//testSystemMessage()
 	//testForum()
-	addUserDefaultTalk()
-
+	//addUserDefaultTalk()
+	//appInfo()
 }

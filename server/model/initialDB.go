@@ -25,7 +25,7 @@ func CreateTables() {
 
 	// create table
 	//orm.DB.SetLogger(gLog.GetLogUtil())
-	err := orm.DB.AutoMigrate(&dbModel.AppGuidanceItem{}, &dbModel.NewsModel{}, &dbModel.Account{}, &dbModel.Recruiter{},
+	err := orm.DB.AutoMigrate(&dbModel.AppInfo{},&dbModel.AppGuidanceItem{}, &dbModel.NewsModel{}, &dbModel.Account{}, &dbModel.Recruiter{},
 		&dbModel.User{}, &dbModel.SocialAccount{}, &dbModel.RecruiterVisitorUser{},
 		&dbModel.Banners{}, &dbModel.LatestNews{}, &dbModel.JobCategory{}, &dbModel.TopJobs{},
 		&dbModel.CareerTalk{}, &dbModel.UserApplyCarrerTalk{}, &dbModel.Company{}, &dbModel.CompuseJobs{}, &dbModel.InternJobs{},

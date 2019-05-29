@@ -25,6 +25,18 @@ type appHandler struct {
 	validate   handlerValider
 }
 
+func (app *appHandler) AppInfo(w http.ResponseWriter, r *http.Request, _ httprouter.Params)  {
+
+	res, err := app.dbOperator.AppInfo()
+	if err != nil{
+		app.ERROR(w, err, http.StatusUnprocessableEntity)
+		return
+	}
+
+	app.JSON(w, res, http.StatusOK)
+
+}
+
 func (app *appHandler) AppGuidanceItems(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	res := app.dbOperator.AppGuidanceItems()

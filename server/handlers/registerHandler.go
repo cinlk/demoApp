@@ -223,6 +223,7 @@ func RegisterRouter(router *httprouter.Router) {
 
 	global := rg.NewGroupRouter(apphandler.UrlPrefix, router)
 	{
+		global.GET("/app/info", apphandler.AppInfo)
 		global.GET("/guidance", apphandler.AppGuidanceItems)
 		global.GET("/advise/image", apphandler.AppAdvitiseImageURL)
 		global.POST("/news", apphandler.News)
